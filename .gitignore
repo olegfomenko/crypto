@@ -1,4 +1,6 @@
 .idea
 vendor
 node_modules
-circuits/schnorr/generated/*
+circuits/schnorr/generated
+circuits/merkle/generated
+circuits/pedersen/generated

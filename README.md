@@ -15,3 +15,5 @@ Includes:
 
 - Circom circuits:
   1. Schnorr signature 
+  2. Pedersen commitment
+  3. Merkle tree
