@@ -13,6 +13,8 @@ Includes:
     4. [Schnorr signature over BabyJubjub curve](./go/schnorr-bjj)
     5. [ZK-SNARK (Pinocchio protocol) basic implementation](./go/zk-snark)
     6. [Pedersen commitment on Circom circuits](./go/pedersen-circom)
+    7. [Elliptic curve](./go/ec)
+    8. [El-Gamal](./go/el-gamal)
 
 
 - Circom circuits:
