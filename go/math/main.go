@@ -7,7 +7,6 @@ package math
 import (
 	"crypto/rand"
 	"errors"
-	"fmt"
 	"math/big"
 )
 
@@ -122,6 +121,25 @@ func FindSquareRoot(n *big.Int, p *big.Int) (*big.Int, error) {
 	}
 }
 
+func GenRandPrime(size int) (*big.Int, error) {
+	for {
+		val := make([]byte, size)
+		if _, err := rand.Read(val); err != nil {
+			return nil, err
+		}
+
+		res := new(big.Int).SetBytes(val)
+		ok, err := TestPrime(res)
+		if err != nil {
+			return nil, err
+		}
+
+		if ok {
+			return res, nil
+		}
+	}
+}
+
 // TestPrime implements the Solovay–Strassen test for prime numbers
 // More info: https://en.wikipedia.org/wiki/Solovay%E2%80%93Strassen_primality_test
 func TestPrime(n *big.Int) (bool, error) {
@@ -165,7 +183,6 @@ func TestPrime(n *big.Int) (bool, error) {
 		j = new(big.Int).Mod(j.Add(j, n), n)
 
 		if j.Cmp(t) != 0 {
-			fmt.Println("failed", i, j, t, n, a)
 			return false, nil
 		}
 	}

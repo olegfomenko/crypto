@@ -15,7 +15,8 @@ Includes:
     6. [Pedersen commitment on Circom circuits](./go/pedersen-circom)
     7. [Elliptic curve](./go/ec)
     8. [El-Gamal](./go/el-gamal)
-    9. [Math (crypto)](./go/math) 
+    9. [Math (crypto)](./go/math)
+    10. [RSA](./go/rsa) 
 
 
 - Circom circuits:
