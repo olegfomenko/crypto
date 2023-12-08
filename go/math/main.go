@@ -19,6 +19,26 @@ func GCD(a, b *big.Int) *big.Int {
 	return GCD(b, new(big.Int).Mod(a, b))
 }
 
+func Phi(n *big.Int) *big.Int {
+	result := new(big.Int).Set(n)
+
+	for i := big.NewInt(2); new(big.Int).Mul(i, i).Cmp(n) <= 0; i = i.Add(i, big.NewInt(1)) {
+		if new(big.Int).Mod(n, i).Cmp(big.NewInt(0)) == 0 {
+			for new(big.Int).Mod(n, i).Cmp(big.NewInt(0)) == 0 {
+				n.Div(n, i)
+			}
+
+			result = new(big.Int).Sub(result, new(big.Int).Div(result, i))
+		}
+	}
+
+	if n.Cmp(big.NewInt(1)) > 0 {
+		result = new(big.Int).Sub(result, new(big.Int).Div(result, n))
+	}
+
+	return result
+}
+
 // FindSquareRoot uses Cipolla algorithm to solve x^2 = a (mod P)
 // More information: https://en.wikipedia.org/wiki/Cipolla%27s_algorithm
 func FindSquareRoot(n *big.Int, p *big.Int) (*big.Int, error) {

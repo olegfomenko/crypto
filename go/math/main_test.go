@@ -11,6 +11,12 @@ import (
 	"testing"
 )
 
+func TestPhi(t *testing.T) {
+	fmt.Println(Phi(big.NewInt(31))) // 30
+	fmt.Println(Phi(big.NewInt(10))) // 4
+	fmt.Println(Phi(big.NewInt(7)))  // 7
+}
+
 func TestFindSquareRoot(t *testing.T) {
 	fmt.Println(FindSquareRoot(big.NewInt(10), big.NewInt(13)))    // 6 or 7
 	fmt.Println(FindSquareRoot(big.NewInt(362), big.NewInt(7919))) // 7828 or 91
