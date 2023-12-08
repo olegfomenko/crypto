@@ -19,6 +19,40 @@ func GCD(a, b *big.Int) *big.Int {
 	return GCD(b, new(big.Int).Mod(a, b))
 }
 
+func Mu(n *big.Int) int {
+	if n.Cmp(big.NewInt(1)) == 0 {
+		return 1
+	}
+
+	cnt := 0
+
+	for i := big.NewInt(2); new(big.Int).Mul(i, i).Cmp(n) <= 0; i = i.Add(i, big.NewInt(1)) {
+		if new(big.Int).Mod(n, i).Cmp(big.NewInt(0)) == 0 {
+			ai := 0
+			for new(big.Int).Mod(n, i).Cmp(big.NewInt(0)) == 0 {
+				n.Div(n, i)
+				ai++
+			}
+
+			if ai > 1 {
+				return 0
+			}
+
+			cnt++
+		}
+	}
+
+	if n.Cmp(big.NewInt(1)) > 0 {
+		cnt++
+	}
+
+	if cnt%2 == 0 {
+		return 1
+	}
+
+	return -1
+}
+
 func Phi(n *big.Int) *big.Int {
 	result := new(big.Int).Set(n)
 

@@ -11,6 +11,13 @@ import (
 	"testing"
 )
 
+func TestMu(t *testing.T) {
+	fmt.Println(Mu(big.NewInt(31))) // -1
+	fmt.Println(Mu(big.NewInt(10))) // 1
+	fmt.Println(Mu(big.NewInt(7)))  // -1
+	fmt.Println(Mu(big.NewInt(98))) // -0
+}
+
 func TestPhi(t *testing.T) {
 	fmt.Println(Phi(big.NewInt(31))) // 30
 	fmt.Println(Phi(big.NewInt(10))) // 4
