@@ -11,6 +11,10 @@ import (
 	"testing"
 )
 
+func TestLCM(t *testing.T) {
+	fmt.Println(LCM(big.NewInt(7), big.NewInt(4), big.NewInt(2), big.NewInt(14))) // 28
+}
+
 func TestMu(t *testing.T) {
 	fmt.Println(Mu(big.NewInt(31))) // -1
 	fmt.Println(Mu(big.NewInt(10))) // 1

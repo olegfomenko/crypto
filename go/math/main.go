@@ -11,6 +11,19 @@ import (
 	"math/big"
 )
 
+func LCM(x ...*big.Int) *big.Int {
+	if len(x) == 0 {
+		return big.NewInt(1)
+	}
+
+	if len(x) == 1 {
+		return x[0]
+	}
+
+	y := LCM(x[1:]...)
+	return new(big.Int).Mul(new(big.Int).Div(x[0], GCD(x[0], y)), y)
+}
+
 func GCD(a, b *big.Int) *big.Int {
 	if b.Cmp(big.NewInt(0)) == 0 {
 		return a
