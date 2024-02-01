@@ -6,6 +6,14 @@ import (
 	"github.com/cloudflare/bn256"
 )
 
+func P(g []*bn256.G1, h []*bn256.G1, u *bn256.G1, a, b []*big.Int) *bn256.G1 {
+	ga := vectorPointScalarMul(g, a)
+	hb := vectorPointScalarMul(h, b)
+	p := new(bn256.G1).Add(ga, hb)
+	p.Add(p, new(bn256.G1).ScalarMult(u, vectorMul(a, b)))
+	return p
+}
+
 func InnerProductH(n int, g []*bn256.G1, h []*bn256.G1, u *bn256.G1, a, a1, b, b1 []*big.Int, c *big.Int) *bn256.G1 {
 	if n%2 != 0 {
 		panic("invalid n")

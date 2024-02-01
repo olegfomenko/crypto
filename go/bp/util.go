@@ -54,7 +54,7 @@ func vectorMul(a []*big.Int, b []*big.Int) *big.Int {
 
 	res := big.NewInt(0)
 	for i := 0; i < len(a); i++ {
-		res.Add(res, mul(a[i], b[i]))
+		res = add(res, mul(a[i], b[i]))
 	}
 	return res
 }
@@ -65,8 +65,28 @@ func vectorPointScalarMul(g []*bn256.G1, a []*big.Int) *bn256.G1 {
 	}
 
 	res := new(bn256.G1).ScalarMult(g[0], a[0])
-	for i := 0; i < len(g); i++ {
+	for i := 1; i < len(g); i++ {
 		res.Add(res, new(bn256.G1).ScalarMult(g[i], a[i]))
+	}
+	return res
+}
+
+func vectorPointMulOnScalar(g []*bn256.G1, a *big.Int) []*bn256.G1 {
+	res := make([]*bn256.G1, len(g))
+	for i := range res {
+		res[i] = new(bn256.G1).ScalarMult(g[i], a)
+	}
+	return res
+}
+
+func hadamardMul(a, b []*bn256.G1) []*bn256.G1 {
+	if len(a) != len(b) {
+		panic("invalid length for scalar mul")
+	}
+
+	res := make([]*bn256.G1, len(a))
+	for i := range res {
+		res[i] = new(bn256.G1).Add(a[i], b[i])
 	}
 	return res
 }
