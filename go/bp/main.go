@@ -6,10 +6,42 @@ import (
 	"github.com/cloudflare/bn256"
 )
 
-func P(g []*bn256.G1, h []*bn256.G1, u *bn256.G1, a, b []*big.Int) *bn256.G1 {
-	ga := vectorPointScalarMul(g, a)
-	hb := vectorPointScalarMul(h, b)
-	p := new(bn256.G1).Add(ga, hb)
+type RangeProofSetup struct {
+	*InnerArgumentSetup
+	G *bn256.G1
+	H *bn256.G1
+}
+
+type InnerArgumentSetup struct {
+	n int
+	g []*bn256.G1
+	h []*bn256.G1
+	u *bn256.G1
+}
+
+func newRangeProofSetup(n int) *RangeProofSetup {
+	return &RangeProofSetup{
+		InnerArgumentSetup: newInnerArgumentSetup(n),
+		G:                  points(1)[0],
+		H:                  points(1)[0],
+	}
+}
+
+func newInnerArgumentSetup(n int) *InnerArgumentSetup {
+	g := points(n)
+	h := points(n)
+	u := points(1)
+
+	return &InnerArgumentSetup{
+		n: n,
+		g: g,
+		h: h,
+		u: u[0],
+	}
+}
+
+func productCom(g []*bn256.G1, h []*bn256.G1, u *bn256.G1, a, b []*big.Int) *bn256.G1 {
+	p := vecCom(g, h, a, b)
 	p.Add(p, new(bn256.G1).ScalarMult(u, vectorMul(a, b)))
 	return p
 }
