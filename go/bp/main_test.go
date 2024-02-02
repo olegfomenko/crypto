@@ -5,15 +5,23 @@
 package bp
 
 import (
+	"crypto/rand"
 	"math/big"
 	"testing"
+
+	"github.com/cloudflare/bn256"
 )
 
 func TestBulletProof(t *testing.T) {
 	const n = 4
 	public := NewBulletProofPublic(n)
 
-	proof, err := public.Prove(big.NewInt(11), values(1)[0])
+	prv, err := rand.Int(rand.Reader, bn256.Order)
+	if err != nil {
+		panic(err)
+	}
+
+	proof, err := public.Prove(big.NewInt(11), prv)
 	if err != nil {
 		panic(err)
 	}
