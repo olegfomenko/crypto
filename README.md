@@ -17,6 +17,7 @@ Includes:
     8. [El-Gamal](./go/el-gamal)
     9. [Math (crypto)](./go/math)
     10. [RSA](./go/rsa) 
+    11. [Bulletproof](./go/bp) 
 
 
 - Circom circuits:
