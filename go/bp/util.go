@@ -247,5 +247,5 @@ func toBits(v *big.Int, n int) []*big.Int {
 	for len(res) < n {
 		res = append(res, big.NewInt(0))
 	}
-	return res
+	return res[:n]
 }
