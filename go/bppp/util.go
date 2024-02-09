@@ -37,6 +37,17 @@ func zeros(n int) []*big.Int {
 	return res
 }
 
+func powvector(v *big.Int, a int) []*big.Int {
+	val := big.NewInt(1)
+	res := make([]*big.Int, a)
+	for i := range res {
+		res[i] = val
+		val = mul(val, val)
+	}
+
+	return res
+}
+
 func points(n int) []*bn256.G1 {
 	res := make([]*bn256.G1, n)
 	var err error
@@ -48,16 +59,60 @@ func points(n int) []*bn256.G1 {
 	return res
 }
 
+func inv(x *big.Int) *big.Int {
+	return new(big.Int).ModInverse(x, bn256.Order)
+}
+
+func zeroIfNil(x *big.Int) *big.Int {
+	if x == nil {
+		return bint(0)
+	}
+	return x
+}
+
 func add(x *big.Int, y *big.Int) *big.Int {
+	x = zeroIfNil(x)
+	y = zeroIfNil(y)
 	return new(big.Int).Mod(new(big.Int).Add(x, y), bn256.Order)
 }
 
 func sub(x *big.Int, y *big.Int) *big.Int {
+	x = zeroIfNil(x)
+	y = zeroIfNil(y)
 	return new(big.Int).Mod(new(big.Int).Sub(x, y), bn256.Order)
 }
 
 func mul(x *big.Int, y *big.Int) *big.Int {
+	if x == nil || y == nil {
+		return bint(0)
+	}
+
 	return new(big.Int).Mod(new(big.Int).Mul(x, y), bn256.Order)
+}
+
+func pow(x *big.Int, y *big.Int) *big.Int {
+	return new(big.Int).Exp(x, y, bn256.Order)
+}
+
+func bint(v int) *big.Int {
+	return new(big.Int).SetInt64(int64(v))
+}
+
+func bbool(v bool) *big.Int {
+	if v {
+		return new(big.Int).SetInt64(1)
+	}
+
+	return new(big.Int).SetInt64(0)
+}
+
+func vectorTensorMul(a, b []*big.Int) []*big.Int {
+	res := make([]*big.Int, 0, len(a)*len(b))
+
+	for i := range a {
+		res = append(res, vectorMulOnScalar(b, a[i])...)
+	}
+	return res
 }
 
 func vectorMul(a []*big.Int, b []*big.Int) *big.Int {
@@ -72,7 +127,7 @@ func vectorMul(a []*big.Int, b []*big.Int) *big.Int {
 	return res
 }
 
-func wightVectorMul(a []*big.Int, b []*big.Int, mu *big.Int) *big.Int {
+func weightVectorMul(a []*big.Int, b []*big.Int, mu *big.Int) *big.Int {
 	if len(b) != len(a) {
 		panic("invalid length")
 	}
@@ -157,6 +212,19 @@ func vectorAdd(a []*big.Int, b []*big.Int) []*big.Int {
 	return res
 }
 
+func vectorSub(a []*big.Int, b []*big.Int) []*big.Int {
+	if len(b) != len(a) {
+		panic("invalid length")
+	}
+
+	res := make([]*big.Int, len(a))
+	for i := 0; i < len(res); i++ {
+		res[i] = sub(a[i], b[i])
+	}
+
+	return res
+}
+
 func vectorPointsAdd(a, b []*bn256.G1) []*bn256.G1 {
 	if len(a) != len(b) {
 		panic("invalid length for scalar mul")
@@ -165,6 +233,135 @@ func vectorPointsAdd(a, b []*bn256.G1) []*bn256.G1 {
 	res := make([]*bn256.G1, len(a))
 	for i := range res {
 		res[i] = new(bn256.G1).Add(a[i], b[i])
+	}
+	return res
+}
+
+func vectorMulOnMatrix(a []*big.Int, m [][]*big.Int) []*big.Int {
+	var res []*big.Int
+
+	for j := 0; j < len(m[0]); j++ {
+		var column []*big.Int
+
+		for i := 0; i < len(m); i++ {
+			column = append(column, m[i][j])
+		}
+
+		res = append(res, vectorMul(a, column))
+	}
+
+	return res
+}
+
+func diagInv(x *big.Int, n int) [][]*big.Int {
+	var res [][]*big.Int
+	val := big.NewInt(1)
+	inv := new(big.Int).ModInverse(x, bn256.Order)
+
+	for i := 0; i < n; i++ {
+		res[i] = make([]*big.Int, n)
+
+		for j := 0; j < n; j++ {
+			res[i][j] = big.NewInt(0)
+
+			if i == j {
+				res[i][j] = val
+				val = mul(val, inv)
+			}
+		}
+	}
+
+	return res
+}
+
+func polyMul(a, b map[int]*big.Int) map[int]*big.Int { // res dimension will be len(a) + len(b) - 1
+	res := make(map[int]*big.Int)
+
+	for i := range a {
+		for j := range b {
+			res[i+j] = mul(a[i], b[i])
+		}
+	}
+
+	return res
+}
+
+func polyAdd(a, b map[int]*big.Int) map[int]*big.Int { // res dimension will be max(len(a), len(b))
+	res := make(map[int]*big.Int)
+
+	for i := range a {
+		for j := range b {
+			res[i+j] = add(a[i], b[i])
+		}
+	}
+
+	return res
+}
+
+func polySub(a, b map[int]*big.Int) map[int]*big.Int { // res dimension will be max(len(a), len(b))
+	res := make(map[int]*big.Int)
+
+	for i := range a {
+		for j := range b {
+			res[i+j] = sub(a[i], b[i])
+		}
+	}
+
+	return res
+}
+
+func polyVectorAdd(a, b map[int][]*big.Int) map[int][]*big.Int { // res dimension will be max(len(a), len(b))
+	res := make(map[int][]*big.Int)
+
+	for i := range a {
+		for j := range b {
+			res[i+j] = vectorAdd(a[i], b[i])
+		}
+	}
+
+	return res
+}
+
+func polyVectorMulWeight(a, b map[int][]*big.Int, mu *big.Int) map[int]*big.Int { // res dimension will be len(a) + len(b) - 1
+	res := make(map[int]*big.Int)
+
+	for i := range a {
+		for j := range b {
+			res[i+j] = weightVectorMul(a[i], b[i], mu)
+		}
+	}
+
+	return res
+}
+
+func polyVectorMul(a, b map[int][]*big.Int) map[int]*big.Int { // res dimension will be len(a) + len(b) - 1
+	res := make(map[int]*big.Int)
+
+	for i := range a {
+		for j := range b {
+			res[i+j] = vectorMul(a[i], b[i])
+		}
+	}
+
+	return res
+}
+
+func polyCalc(poly map[int]*big.Int, x *big.Int) *big.Int {
+	res := bint(0)
+	for k, v := range poly {
+		res = add(res, mul(v, pow(x, bint(k))))
+	}
+	return res
+}
+
+func polyVectorCalc(poly map[int][]*big.Int, x *big.Int) []*big.Int {
+	var res []*big.Int
+	for k, v := range poly {
+		if res == nil {
+			res = zeros(len(v))
+		}
+
+		res = vectorAdd(res, vectorMulOnScalar(v, pow(x, bint(k))))
 	}
 	return res
 }
