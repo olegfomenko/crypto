@@ -1,6 +1,5 @@
 package bppp
 
-import "C"
 import (
 	"bytes"
 	"fmt"
