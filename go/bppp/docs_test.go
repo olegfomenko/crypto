@@ -32,12 +32,37 @@ type ACPublic struct {
 type PartitionF = func(typ int, index int) *int // typ = 1:lo, 2:ll, 3:lr, 4:no
 
 type AcPrivate struct {
-	v  [][]*big.Int // Nv
+	v  [][]*big.Int // k*Nv
 	sv []*big.Int   // k
 	wl []*big.Int   // Nm
 	wr []*big.Int   // Nm
 	wo []*big.Int   // No
 	f  PartitionF
+}
+
+func ArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate) {
+	public.V = make([]*bn256.G1, public.K)
+	for i := range public.V {
+		public.V[i] = Com(private.v[i], private.sv[i], public.G, public.HVec)
+	}
+
+	ro, rl, no, nl, lo, ll, Co, Cl := CommitOL(public, private.wo, private.wl, private.f)
+
+	rr, nr, lr, Cr := CommitR(public, private.wo, private.wr, private.f)
+
+	InnerArithmeticCircuitProtocol(public, private,
+		[][]*big.Int{rl, rr, ro},
+		[][]*big.Int{nl, nr, no},
+		[][]*big.Int{ll, lr, lo},
+		[]*bn256.G1{Cl, Cr, Co},
+	)
+}
+
+func Com(v []*big.Int, s *big.Int, G *bn256.G1, H []*bn256.G1) *bn256.G1 {
+	res := new(bn256.G1).ScalarMult(G, v[0])
+	res.Add(res, new(bn256.G1).ScalarMult(H[0], s))
+	res.Add(res, vectorPointScalarMul(H[8:], v[1:]))
+	return res
 }
 
 // Creates commits Co and Cl, also map input witness using f partition func
@@ -113,21 +138,6 @@ func CommitR(public *ACPublic, wo, wr []*big.Int, f PartitionF) (rr []*big.Int, 
 	Cr.Add(Cr, vectorPointScalarMul(public.HVec, append(rr[1:], lr...)))
 	Cr.Add(Cr, vectorPointScalarMul(public.GVec, nr))
 	return
-}
-
-func ArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate) {
-	// TODO set Vi
-
-	ro, rl, no, nl, lo, ll, Co, Cl := CommitOL(public, private.wo, private.wl, private.f)
-
-	rr, nr, lr, Cr := CommitR(public, private.wo, private.wr, private.f)
-
-	InnerArithmeticCircuitProtocol(public, private,
-		[][]*big.Int{rl, rr, ro},
-		[][]*big.Int{nl, nr, no},
-		[][]*big.Int{ll, lr, lo},
-		[]*bn256.G1{Cl, Cr, Co},
-	)
 }
 
 func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, l [][]*big.Int, C []*bn256.G1) {
