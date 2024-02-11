@@ -676,14 +676,14 @@ func wnla(g *bn256.G1, G, H []*bn256.G1, c []*big.Int, C *bn256.G1, ro, mu *big.
 
 	fmt.Println("WNLA secret: ", add(vectorMul(c, l), weightVectorMul(n, n, mu)))
 
-	_v := add(vectorMul(c, l), weightVectorMul(n, n, mu))
-
-	_C := new(bn256.G1).ScalarMult(g, _v)
-	_C.Add(_C, vectorPointScalarMul(H, l))
-	_C.Add(_C, vectorPointScalarMul(G, n))
-
-	fmt.Println("Evaluated C:", _C)
-	fmt.Println("Passed C:", C)
+	//_v := add(vectorMul(c, l), weightVectorMul(n, n, mu))
+	//
+	//_C := new(bn256.G1).ScalarMult(g, _v)
+	//_C.Add(_C, vectorPointScalarMul(H, l))
+	//_C.Add(_C, vectorPointScalarMul(G, n))
+	//
+	//fmt.Println("Evaluated C:", _C)
+	//fmt.Println("Passed C:", C)
 
 	if len(l)+len(n) < 6 {
 		// Prover sends l, n to Verifier
