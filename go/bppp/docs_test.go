@@ -57,12 +57,13 @@ func TestACProtocol(t *testing.T) {
 
 	// Wl*w = M(Wl*al + Wr*ar + Wo*ao)
 	// fl*wv+al = v+al = -Wl*w = -M(Wl*al + Wr*ar + Wo*ao) = -M(Wv*v+c)
-	// v+al = -M*Wv*v - M*c
-	// if -MWv = E (or MWv = -E) then al = -Mc
+	// v+al = -M*(Wv*v) - M*c
+	// if M such that -M(Wv*v) = v then al = -M*c
 
-	// Corresponding matrix (inverse for -Wv)
-	m := []*big.Int{frac(1, 1010), frac(1, 101)}
-	fmt.Println("Check -Wm*m =", vectorMul(Wv, vectorMulOnScalar(m, bint(-1)))) // PASS
+	// Corresponding matrix M such that -M(Wv*v) = v
+	m := []*big.Int{frac(3, 530), frac(5, 530)}
+
+	fmt.Println("Check -M(Wv*v) =", vectorMulOnScalar(vectorMulOnScalar(m, bint(-1)), vectorMul(Wv, v)))
 
 	al := vectorMulOnScalar(m, bint(-15*1000)) // -m * c = -m * (r * z^3)
 	fmt.Println("Check v + al =", vectorAdd(v, al))
@@ -76,7 +77,6 @@ func TestACProtocol(t *testing.T) {
 
 	// Wl = M(Wl*al + Wr*ar + Wo*ao) * w'
 	// where w' - right inverse for w
-
 	w := []*big.Int{bint(3), bint(5), bint(15)}
 
 	// left inverse w = [3/259, 5/259, 15/259]
@@ -104,13 +104,6 @@ func TestACProtocol(t *testing.T) {
 		fmt.Println("Wl*w =", check)
 		fmt.Println("Check circuit:", vectorAdd(check, vectorAdd(v, al)))
 	}
-
-	fmt.Println("\n\n\n ")
-
-	fmt.Println(vectorMulOnScalar(m, vectorMul(Wv, v)))
-	fmt.Println(vectorAdd(Wlw, al))
-
-	fmt.Println("\n\n\n ")
 
 	Wm := [][]*big.Int{{bint(0), bint(0), bint(1)}} // [0, 0, 1]
 
