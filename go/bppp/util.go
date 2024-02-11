@@ -42,7 +42,7 @@ func powvector(v *big.Int, a int) []*big.Int {
 	res := make([]*big.Int, a)
 	for i := range res {
 		res[i] = val
-		val = mul(val, val)
+		val = mul(val, v)
 	}
 
 	return res
@@ -254,7 +254,7 @@ func vectorMulOnMatrix(a []*big.Int, m [][]*big.Int) []*big.Int {
 }
 
 func diagInv(x *big.Int, n int) [][]*big.Int {
-	var res [][]*big.Int
+	var res [][]*big.Int = make([][]*big.Int, n)
 	val := big.NewInt(1)
 	inv := new(big.Int).ModInverse(x, bn256.Order)
 

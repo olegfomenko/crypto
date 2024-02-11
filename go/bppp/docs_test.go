@@ -52,7 +52,7 @@ func CommitOL(public *ACPublic, wo, wl []*big.Int, f PartitionF) (ro []*big.Int,
 	// nl == wl and nr == wr (described in 5.2.1)
 	nl = wl // Nm
 
-	no = make([]*big.Int, public.Nm)
+	no = make([]*big.Int, public.Nm) // Nm
 	for j := range no {
 		no[j] = big.NewInt(0)
 
@@ -61,7 +61,7 @@ func CommitOL(public *ACPublic, wo, wl []*big.Int, f PartitionF) (ro []*big.Int,
 		}
 	}
 
-	lo = make([]*big.Int, public.Nv)
+	lo = make([]*big.Int, public.Nv) // Nv
 	for j := range lo {
 		lo[j] = big.NewInt(0)
 
@@ -70,7 +70,7 @@ func CommitOL(public *ACPublic, wo, wl []*big.Int, f PartitionF) (ro []*big.Int,
 		}
 	}
 
-	ll = make([]*big.Int, public.Nv)
+	ll = make([]*big.Int, public.Nv) // Nv
 	for j := range lo {
 		ll[j] = big.NewInt(0)
 
@@ -94,13 +94,13 @@ func CommitR(public *ACPublic, wo, wr []*big.Int, f PartitionF) (rr []*big.Int, 
 	rr_ := values(4) // 4
 
 	// contains random values, except several positions (described in 5.2.4)
-	rr = []*big.Int{rr_[0], rr_[1], big.NewInt(0), rr_[2], rr_[3], big.NewInt(0), big.NewInt(0), big.NewInt(0)}
+	rr = []*big.Int{rr_[0], rr_[1], big.NewInt(0), rr_[2], rr_[3], big.NewInt(0), big.NewInt(0), big.NewInt(0)} // 8
 
 	// nl == wl and nr == wr (described in 5.2.1)
 	nr = wr
 
 	// Creates commits Cr also map input witness using f partition func
-	lr = make([]*big.Int, public.Nv)
+	lr = make([]*big.Int, public.Nv) // Nv
 	for j := range lr {
 		lr[j] = big.NewInt(0)
 
@@ -116,6 +116,8 @@ func CommitR(public *ACPublic, wo, wr []*big.Int, f PartitionF) (rr []*big.Int, 
 }
 
 func ArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate) {
+	// TODO set Vi
+
 	ro, rl, no, nl, lo, ll, Co, Cl := CommitOL(public, private.wo, private.wl, private.f)
 
 	rr, nr, lr, Cr := CommitR(public, private.wo, private.wr, private.f)
@@ -192,6 +194,8 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 		MlnO = append(MlnO, make([]*big.Int, public.Nm))
 
 		for j := 0; j < public.Nm; j++ {
+			MlnO[i][j] = big.NewInt(0)
+
 			if j_ := private.f(4, j); j_ != nil {
 				MlnO[i][j] = WlO[i][*j_]
 			}
@@ -203,6 +207,8 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 		MmnO = append(MmnO, make([]*big.Int, public.Nm))
 
 		for j := 0; j < public.Nm; j++ {
+			MmnO[i][j] = big.NewInt(0)
+
 			if j_ := private.f(4, j); j_ != nil {
 				MmnO[i][j] = WmO[i][*j_]
 			}
@@ -217,6 +223,8 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 		MllL = append(MllL, make([]*big.Int, public.Nv))
 
 		for j := 0; j < public.Nv; j++ {
+			MllL[i][j] = big.NewInt(0)
+
 			if j_ := private.f(2, j); j_ != nil {
 				MllL[i][j] = WlO[i][*j_]
 			}
@@ -228,6 +236,8 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 		MmlL = append(MmlL, make([]*big.Int, public.Nv))
 
 		for j := 0; j < public.Nv; j++ {
+			MmlL[i][j] = big.NewInt(0)
+
 			if j_ := private.f(2, j); j_ != nil {
 				MmlL[i][j] = WmO[i][*j_]
 			}
@@ -240,6 +250,8 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 		MllR = append(MllR, make([]*big.Int, public.Nv))
 
 		for j := 0; j < public.Nv; j++ {
+			MllR[i][j] = big.NewInt(0)
+
 			if j_ := private.f(3, j); j_ != nil {
 				MllR[i][j] = WlO[i][*j_]
 			}
@@ -251,6 +263,8 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 		MmlR = append(MmlR, make([]*big.Int, public.Nv))
 
 		for j := 0; j < public.Nv; j++ {
+			MmlR[i][j] = big.NewInt(0)
+
 			if j_ := private.f(3, j); j_ != nil {
 				MmlR[i][j] = WmO[i][*j_]
 			}
@@ -263,6 +277,8 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 		MllO = append(MllO, make([]*big.Int, public.Nv))
 
 		for j := 0; j < public.Nv; j++ {
+			MllO[i][j] = big.NewInt(0)
+
 			if j_ := private.f(1, j); j_ != nil {
 				MllO[i][j] = WlO[i][*j_]
 			}
@@ -274,6 +290,8 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 		MmlO = append(MmlO, make([]*big.Int, public.Nv))
 
 		for j := 0; j < public.Nv; j++ {
+			MmlO[i][j] = big.NewInt(0)
+
 			if j_ := private.f(1, j); j_ != nil {
 				MmlO[i][j] = WmO[i][*j_]
 			}
@@ -299,7 +317,6 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 	V_.ScalarMult(V_, bint(2))
 
 	// Calculate lambda vector (nl == nv * k)
-
 	e_lambda_nl := powvector(ch_lambda, public.Nl)
 
 	e_lambda_nv := powvector(ch_lambda, public.Nv)
@@ -390,6 +407,7 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 		2:  lr,
 	}
 
+	// Calc l_T for T^3
 	l_T_3 := func() []*big.Int {
 		l_T3 := zeros(public.Nv - 1)
 
@@ -442,7 +460,7 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 	sr := []*big.Int{
 		mul(ch_beta, mul(ch_delta, ro[1])),
 		bint(0),
-		add(mul(inv(ch_delta), mul(ch_delta, ro[0])), rl[1]),
+		add(mul(inv(ch_beta), mul(ch_delta, ro[0])), rl[1]),
 		add(add(mul(ch_delta, ro[2]), mul(inv(ch_beta), rl[0])), rr[1]),
 		add(add(add(mul(ch_delta, ro[3]), rl[2]), rv[1]), mul(inv(ch_beta), rr[0])),
 		add(rl[4], rr[3]),
@@ -453,7 +471,7 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 	f_ := []*big.Int{f_T[0], f_T[-1], f_T[1], f_T[2], f_T[3], f_T[5], f_T[6], f_T[7]}
 
 	rs := vectorSub( // 8
-		append([]*big.Int{f_[0]}, vectorMulOnScalar(f_[1:], inv(ch_beta))...), // TODO wtf is this shit?
+		append([]*big.Int{f_[0]}, vectorMulOnScalar(f_[1:], inv(ch_beta))...),
 		sr,
 	)
 
@@ -478,6 +496,7 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 	rT = vectorAdd(rT, vectorMulOnScalar(rr, t2))
 	rT = vectorAdd(rT, vectorMulOnScalar(rv, t3))
 
+	// TODO WTF is this shit, why we need this?
 	vT := polyCalc(psT, t) // will not be used by prover, but should be used by verifier
 	vT = add(vT, mul(v_, t3))
 	vT = add(vT, rT[0])
@@ -488,7 +507,16 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 	PT := new(bn256.G1).ScalarMult(public.G, polyCalc(psT, t))
 	PT.Add(PT, vectorPointScalarMul(public.GVec, polyVectorCalc(pnT, t)))
 
-	cr_T := []*big.Int{bint(1), mul(ch_beta, tinv), mul(ch_beta, t), mul(ch_beta, t2), mul(ch_beta, t3), mul(ch_beta, mul(t2, t3)), mul(ch_beta, mul(t3, t3)), mul(ch_beta, mul(mul(t3, t), t3))} // 8
+	cr_T := []*big.Int{
+		bint(1),
+		mul(ch_beta, tinv),
+		mul(ch_beta, t),
+		mul(ch_beta, t2),
+		mul(ch_beta, t3),
+		mul(ch_beta, mul(t2, t3)),
+		mul(ch_beta, mul(t3, t3)),
+		mul(ch_beta, mul(mul(t3, t), t3)),
+	} // 8
 
 	cT := append(cr_T[1:], polyVectorCalc(cl_T, t)...)
 
