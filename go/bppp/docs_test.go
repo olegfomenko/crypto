@@ -53,26 +53,25 @@ func TestACProtocol(t *testing.T) {
 	// Wv = [-10, -100] = [-z, -z^2]
 	Wv := []*big.Int{bint(-10), bint(-100)}
 
+	v := []*big.Int{p, q}
+
 	// Wl*w = M(Wl*al + Wr*ar + Wo*ao)
-	// fl*wv+al = v+al = -M(Wl*al + Wr*ar + Wo*ao) = -M(Wv*v+c)
+	// fl*wv+al = v+al = -Wl*w = -M(Wl*al + Wr*ar + Wo*ao) = -M(Wv*v+c)
 	// v+al = -M*Wv*v - M*c
 	// if -MWv = E (or MWv = -E) then al = -Mc
 
 	// Corresponding matrix (inverse for -Wv)
 	m := []*big.Int{frac(1, 1010), frac(1, 101)}
-
-	fmt.Println("Check Wm*m =", new(big.Int).Sub(vectorMul(Wv, m), bn256.Order)) // = -1 % Order PASS
+	fmt.Println("Check -Wm*m =", vectorMul(Wv, vectorMulOnScalar(m, bint(-1)))) // PASS
 
 	al := vectorMulOnScalar(m, bint(-15*1000)) // -m * c = -m * (r * z^3)
-
-	Wm := [][]*big.Int{{bint(0), bint(0), bint(1)}} // [0, 0, 1]
+	fmt.Println("Check v + al =", vectorAdd(v, al))
 
 	// Wlw = M(Wl*al + Wr*ar + Wo*ao)
-	// Wl*al + Wr*ar + Wo*ao = 30 - 500 + 15000 = 14530
-	// M(Wl*al + Wr*ar + Wo*ao) = [1453/101, 14530/101]
+	// Wl*al + Wr*ar + Wo*ao = -30 - 500 + 15000 = 14470
+	// M(Wl*al + Wr*ar + Wo*ao) = [1447/101, 14470/101]
 
-	Wlw := vectorMulOnScalar(m, bint(14530)) // 2
-
+	Wlw := vectorMulOnScalar(m, bint(14470)) // 2
 	fmt.Println("Wl*w =", Wlw)
 
 	// Wl = M(Wl*al + Wr*ar + Wo*ao) * w'
@@ -82,8 +81,7 @@ func TestACProtocol(t *testing.T) {
 
 	// left inverse w = [3/259, 5/259, 15/259]
 	wInv := []*big.Int{frac(3, 259), frac(5, 259), frac(15, 259)} // 3
-
-	fmt.Println("Check w*w' =", vectorMul(w, wInv)) // PASS
+	fmt.Println("Check w*w' =", vectorMul(w, wInv))               // PASS
 
 	var Wl [][]*big.Int = make([][]*big.Int, 2)
 	for i := range Wl {
@@ -94,20 +92,27 @@ func TestACProtocol(t *testing.T) {
 		}
 	}
 
-	//Wl := [][]*big.Int{
-	//	{frac( 4359, 26159), frac( 7265, 26159), frac(21795, 26159)},
-	//	{frac( 43590, 26159), frac(72650, 26159), frac( 217950, 26159)},
-	//}
+	fmt.Println("Check -Wl*w =", vectorMulOnScalar(Wlw, bint(-1)))
 
-	check := zeros(2)
+	{
+		check := zeros(2)
 
-	for i := range Wl {
-		check[i] = vectorMul(Wl[i], w)
+		for i := range Wl {
+			check[i] = vectorMul(Wl[i], w)
+		}
+
+		fmt.Println("Wl*w =", check)
+		fmt.Println("Check circuit:", vectorAdd(check, vectorAdd(v, al)))
 	}
 
-	fmt.Println("Wl*w =", check)
+	fmt.Println("\n\n\n ")
 
-	fmt.Println("Check circuit:", vectorAdd(check, vectorAdd([]*big.Int{p, q}, al)))
+	fmt.Println(vectorMulOnScalar(m, vectorMul(Wv, v)))
+	fmt.Println(vectorAdd(Wlw, al))
+
+	fmt.Println("\n\n\n ")
+
+	Wm := [][]*big.Int{{bint(0), bint(0), bint(1)}} // [0, 0, 1]
 
 	public := ACPublic{
 		Nm:   1,
