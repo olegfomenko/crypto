@@ -129,10 +129,10 @@ func TestACProtocol(t *testing.T) {
 		v:  [][]*big.Int{{p, q}},
 		sv: values(1),
 		wl: []*big.Int{p},
-		wr: []*big.Int{p},
+		wr: []*big.Int{q},
 		wo: []*big.Int{mul(p, q)},
 		f: func(typ int, index int) *int {
-			if typ == 4 {
+			if typ == 4 { // map all to no
 				return &index
 			}
 			return nil
