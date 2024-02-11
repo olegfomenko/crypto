@@ -40,6 +40,110 @@ type AcPrivate struct {
 	f  PartitionF
 }
 
+func TestACProtocol(t *testing.T) {
+	// Scheme to proof that:
+	// pq =? r
+	// r = 15
+
+	p := bint(3)
+	q := bint(5)
+
+	// Challenge x = 10
+
+	// Wv = [-10, -100] = [-z, -z^2]
+	Wv := []*big.Int{bint(-10), bint(-100)}
+
+	// Wl*w = M(Wl*al + Wr*ar + Wo*ao)
+	// fl*wv+al = v+al = -M(Wl*al + Wr*ar + Wo*ao) = -M(Wv*v+c)
+	// v+al = -M*Wv*v - M*c
+	// if -MWv = E (or MWv = -E) then al = -Mc
+
+	// Corresponding matrix (inverse for -Wv)
+	m := []*big.Int{frac(1, 1010), frac(1, 101)}
+
+	fmt.Println("Check Wm*m =", new(big.Int).Sub(vectorMul(Wv, m), bn256.Order)) // = -1 % Order PASS
+
+	al := vectorMulOnScalar(m, bint(-15*1000)) // -m * c = -m * (r * z^3)
+
+	Wm := [][]*big.Int{{bint(0), bint(0), bint(1)}} // [0, 0, 1]
+
+	// Wlw = M(Wl*al + Wr*ar + Wo*ao)
+	// Wl*al + Wr*ar + Wo*ao = 30 - 500 + 15000 = 14530
+	// M(Wl*al + Wr*ar + Wo*ao) = [1453/101, 14530/101]
+
+	Wlw := vectorMulOnScalar(m, bint(14530)) // 2
+
+	fmt.Println("Wl*w =", Wlw)
+
+	// Wl = M(Wl*al + Wr*ar + Wo*ao) * w'
+	// where w' - right inverse for w
+
+	w := []*big.Int{bint(3), bint(5), bint(15)}
+
+	// left inverse w = [3/259, 5/259, 15/259]
+	wInv := []*big.Int{frac(3, 259), frac(5, 259), frac(15, 259)} // 3
+
+	fmt.Println("Check w*w' =", vectorMul(w, wInv)) // PASS
+
+	var Wl [][]*big.Int = make([][]*big.Int, 2)
+	for i := range Wl {
+		Wl[i] = make([]*big.Int, 3)
+
+		for j := range Wl[i] {
+			Wl[i][j] = mul(Wlw[i], wInv[j])
+		}
+	}
+
+	//Wl := [][]*big.Int{
+	//	{frac( 4359, 26159), frac( 7265, 26159), frac(21795, 26159)},
+	//	{frac( 43590, 26159), frac(72650, 26159), frac( 217950, 26159)},
+	//}
+
+	check := zeros(2)
+
+	for i := range Wl {
+		check[i] = vectorMul(Wl[i], w)
+	}
+
+	fmt.Println("Wl*w =", check)
+
+	fmt.Println("Check circuit:", vectorAdd(check, vectorAdd([]*big.Int{p, q}, al)))
+
+	public := ACPublic{
+		Nm:   1,
+		Nl:   2,
+		Nv:   2,
+		Nw:   3,
+		No:   1,
+		K:    1,
+		G:    points(1)[0],
+		GVec: points(1),
+		HVec: points(7 + 2),
+		Wm:   Wm,
+		Wl:   Wl,
+		Am:   zeros(1),
+		Al:   al,
+		Fl:   true,
+		Fm:   false,
+	}
+
+	private := AcPrivate{
+		v:  [][]*big.Int{{p, q}},
+		sv: values(1),
+		wl: []*big.Int{p},
+		wr: []*big.Int{p},
+		wo: []*big.Int{mul(p, q)},
+		f: func(typ int, index int) *int {
+			if typ == 4 {
+				return &index
+			}
+			return nil
+		},
+	}
+
+	ArithmeticCircuitProtocol(&public, &private)
+}
+
 func ArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate) {
 	public.V = make([]*bn256.G1, public.K)
 	for i := range public.V {
@@ -511,6 +615,8 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 	vT = add(vT, mul(v_, t3))
 	vT = add(vT, rT[0])
 
+	fmt.Println("Should be WNLA secret: ", vT)
+
 	lT := append(rT[1:], polyVectorCalc(l_T, t)...)
 
 	// Prover and verifier computes
@@ -570,8 +676,9 @@ func wnla(g *bn256.G1, G, H []*bn256.G1, c []*big.Int, C *bn256.G1, ro, mu *big.
 	roinv := inv(ro)
 	fmt.Println("Running WNLA protocol")
 
-	if len(l)+len(n) < 6 {
+	fmt.Println("WNLA secret: ", add(vectorMul(c, l), weightVectorMul(n, n, mu)))
 
+	if len(l)+len(n) < 6 {
 		// Prover sends l, n to Verifier
 		// Next verifier computes:
 		_v := add(vectorMul(c, l), weightVectorMul(n, n, mu))

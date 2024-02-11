@@ -95,7 +95,11 @@ func pow(x *big.Int, y *big.Int) *big.Int {
 }
 
 func bint(v int) *big.Int {
-	return new(big.Int).SetInt64(int64(v))
+	return new(big.Int).Mod(new(big.Int).SetInt64(int64(v)), bn256.Order)
+}
+
+func frac(a, b int) *big.Int {
+	return mul(bint(a), inv(bint(b)))
 }
 
 func bbool(v bool) *big.Int {
@@ -116,8 +120,12 @@ func vectorTensorMul(a, b []*big.Int) []*big.Int {
 }
 
 func vectorMul(a []*big.Int, b []*big.Int) *big.Int {
-	if len(b) != len(a) {
-		panic("invalid length")
+	for len(a) < len(b) {
+		a = append(a, bint(0))
+	}
+
+	for len(b) < len(a) {
+		b = append(b, bint(0))
 	}
 
 	res := big.NewInt(0)
@@ -128,8 +136,12 @@ func vectorMul(a []*big.Int, b []*big.Int) *big.Int {
 }
 
 func weightVectorMul(a []*big.Int, b []*big.Int, mu *big.Int) *big.Int {
-	if len(b) != len(a) {
-		panic("invalid length")
+	for len(a) < len(b) {
+		a = append(a, bint(0))
+	}
+
+	for len(b) < len(a) {
+		b = append(b, bint(0))
 	}
 
 	res := big.NewInt(0)
@@ -142,8 +154,12 @@ func weightVectorMul(a []*big.Int, b []*big.Int, mu *big.Int) *big.Int {
 }
 
 func vectorPointScalarMul(g []*bn256.G1, a []*big.Int) *bn256.G1 {
-	if len(g) != len(a) {
-		panic("invalid length for scalar mul")
+	if len(g) == 0 {
+		return new(bn256.G1).ScalarBaseMult(bint(0))
+	}
+
+	for len(a) < len(g) {
+		a = append(a, bint(0))
 	}
 
 	res := new(bn256.G1).ScalarMult(g[0], a[0])
@@ -200,8 +216,12 @@ func vectorMulOnScalar(a []*big.Int, c *big.Int) []*big.Int {
 }
 
 func vectorAdd(a []*big.Int, b []*big.Int) []*big.Int {
-	if len(b) != len(a) {
-		panic("invalid length")
+	for len(a) < len(b) {
+		a = append(a, bint(0))
+	}
+
+	for len(b) < len(a) {
+		b = append(b, bint(0))
 	}
 
 	res := make([]*big.Int, len(a))
@@ -213,8 +233,12 @@ func vectorAdd(a []*big.Int, b []*big.Int) []*big.Int {
 }
 
 func vectorSub(a []*big.Int, b []*big.Int) []*big.Int {
-	if len(b) != len(a) {
-		panic("invalid length")
+	for len(a) < len(b) {
+		a = append(a, bint(0))
+	}
+
+	for len(b) < len(a) {
+		b = append(b, bint(0))
 	}
 
 	res := make([]*big.Int, len(a))
@@ -226,8 +250,12 @@ func vectorSub(a []*big.Int, b []*big.Int) []*big.Int {
 }
 
 func vectorPointsAdd(a, b []*bn256.G1) []*bn256.G1 {
-	if len(a) != len(b) {
-		panic("invalid length for scalar mul")
+	for len(a) < len(b) {
+		a = append(a, new(bn256.G1).ScalarBaseMult(bint(0)))
+	}
+
+	for len(b) < len(a) {
+		b = append(b, new(bn256.G1).ScalarBaseMult(bint(0)))
 	}
 
 	res := make([]*bn256.G1, len(a))
