@@ -105,8 +105,8 @@ func bbool(v bool) *big.Int {
 func vectorTensorMul(a, b []*big.Int) []*big.Int {
 	res := make([]*big.Int, 0, len(a)*len(b))
 
-	for i := range a {
-		res = append(res, vectorMulOnScalar(b, a[i])...)
+	for i := range b {
+		res = append(res, vectorMulOnScalar(a, b[i])...)
 	}
 	return res
 }

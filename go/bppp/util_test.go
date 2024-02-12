@@ -6,6 +6,16 @@ import (
 	"testing"
 )
 
+func TestTensorMul(t *testing.T) {
+	a := powvector(bint(10), 2)
+	b := powvector(bint(100), 3)
+	// 1 10
+	// 1 100 10000
+
+	// 1 10 100 1000 10000 100000
+	fmt.Println(vectorTensorMul(a, b))
+}
+
 func TestPolyVectorMulWeight(t *testing.T) {
 	mu := bint(10)
 	a := map[int][]*big.Int{

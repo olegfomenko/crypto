@@ -41,9 +41,11 @@ type AcPrivate struct {
 }
 
 func TestACProtocol(t *testing.T) {
-	// Scheme to proof that:
-	// pq =? r
-	// and public r = 15
+	// Scheme to proof that we know such p, q that:
+	// pq = r
+	// for some public r.
+
+	// r = 15, p = 3, q = 5
 
 	p := bint(3)
 	q := bint(5)
@@ -66,14 +68,12 @@ func TestACProtocol(t *testing.T) {
 	fmt.Println("Check -M(Wv*v) =", vectorMulOnScalar(vectorMulOnScalar(m, bint(-1)), vectorMul(Wv, v)))
 
 	al := vectorMulOnScalar(m, bint(-15*1000)) // -m * c = -m * (r * z^3)
-	fmt.Println("Check v + al =", vectorAdd(v, al))
 
 	// Wlw = M(Wl*al + Wr*ar + Wo*ao)
 	// Wl*al + Wr*ar + Wo*ao = -30 - 500 + 15000 = 14470
 	// M(Wl*al + Wr*ar + Wo*ao) = [1447/101, 14470/101]
 
 	Wlw := vectorMulOnScalar(m, bint(14470)) // 2
-	fmt.Println("Wl*w =", Wlw)
 
 	// Wl = M(Wl*al + Wr*ar + Wo*ao) * w'
 	// where w' - right inverse for w
@@ -92,8 +92,6 @@ func TestACProtocol(t *testing.T) {
 		}
 	}
 
-	fmt.Println("Check -Wl*w =", vectorMulOnScalar(Wlw, bint(-1)))
-
 	{
 		check := zeros(2)
 
@@ -101,7 +99,6 @@ func TestACProtocol(t *testing.T) {
 			check[i] = vectorMul(Wl[i], w)
 		}
 
-		fmt.Println("Wl*w =", check)
 		fmt.Println("Check circuit:", vectorAdd(check, vectorAdd(v, al)))
 	}
 
@@ -309,7 +306,7 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 			MlnO[i][j] = big.NewInt(0)
 
 			if j_ := private.f(4, j); j_ != nil {
-				MlnO[i][j] = WlO[i][*j_]
+				MlnO[i][j].Set(WlO[i][*j_])
 			}
 		}
 	}
@@ -322,7 +319,7 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 			MmnO[i][j] = big.NewInt(0)
 
 			if j_ := private.f(4, j); j_ != nil {
-				MmnO[i][j] = WmO[i][*j_]
+				MmnO[i][j].Set(WmO[i][*j_])
 			}
 		}
 	}
@@ -338,7 +335,7 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 			MllL[i][j] = big.NewInt(0)
 
 			if j_ := private.f(2, j); j_ != nil {
-				MllL[i][j] = WlO[i][*j_]
+				MllL[i][j].Set(WlO[i][*j_])
 			}
 		}
 	}
@@ -351,7 +348,7 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 			MmlL[i][j] = big.NewInt(0)
 
 			if j_ := private.f(2, j); j_ != nil {
-				MmlL[i][j] = WmO[i][*j_]
+				MmlL[i][j].Set(WmO[i][*j_])
 			}
 		}
 	}
@@ -365,7 +362,7 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 			MllR[i][j] = big.NewInt(0)
 
 			if j_ := private.f(3, j); j_ != nil {
-				MllR[i][j] = WlO[i][*j_]
+				MllR[i][j].Set(WlO[i][*j_])
 			}
 		}
 	}
@@ -378,7 +375,7 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 			MmlR[i][j] = big.NewInt(0)
 
 			if j_ := private.f(3, j); j_ != nil {
-				MmlR[i][j] = WmO[i][*j_]
+				MmlR[i][j].Set(WmO[i][*j_])
 			}
 		}
 	}
@@ -392,7 +389,7 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 			MllO[i][j] = big.NewInt(0)
 
 			if j_ := private.f(1, j); j_ != nil {
-				MllO[i][j] = WlO[i][*j_]
+				MllO[i][j].Set(WlO[i][*j_])
 			}
 		}
 	}
@@ -405,7 +402,7 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 			MmlO[i][j] = big.NewInt(0)
 
 			if j_ := private.f(1, j); j_ != nil {
-				MmlO[i][j] = WmO[i][*j_]
+				MmlO[i][j].Set(WmO[i][*j_])
 			}
 		}
 	}
@@ -552,9 +549,6 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 	f_T[3] = add(f_T[3], v_)
 	f_T = polySub(f_T, polyVectorMul(cl_T, l_T))
 
-	fmt.Println("cl_T =", cl_T)
-	fmt.Println("l_T =", l_T)
-
 	rv := zeros(8) // 8
 	rv[1] = func() *big.Int {
 		rv1 := bint(0)
@@ -582,8 +576,6 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 		add(mul(ch_delta, ro[5]), rr[4]),
 		add(mul(ch_delta, ro[6]), rl[5]),
 	}
-
-	fmt.Println("F(t): ", f_T)
 
 	f_ := []*big.Int{f_T[-1], f_T[-2], f_T[0], f_T[1], f_T[2], f_T[4], f_T[5], f_T[6]}
 
@@ -638,8 +630,6 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 	} // 8
 
 	cT := append(cr_T[1:], polyVectorCalc(cl_T, t)...)
-
-	fmt.Println("n(T) =", nT)
 
 	CT := new(bn256.G1).Add(PT, new(bn256.G1).ScalarMult(Cs, tinv))
 	CT.Add(CT, new(bn256.G1).ScalarMult(Co, ch_delta))
