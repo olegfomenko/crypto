@@ -639,7 +639,7 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 
 	cT := append(cr_T[1:], polyVectorCalc(cl_T, t)...)
 
-	fmt.Println("n(T) = ", nT)
+	fmt.Println("n(T) =", nT)
 
 	CT := new(bn256.G1).Add(PT, new(bn256.G1).ScalarMult(Cs, tinv))
 	CT.Add(CT, new(bn256.G1).ScalarMult(Co, ch_delta))
@@ -649,7 +649,7 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 
 	fmt.Println("C =", CT)
 
-	CTPrv := new(bn256.G1).ScalarMult(public.G, add(vT, rT[0]))
+	CTPrv := new(bn256.G1).ScalarMult(public.G, vT)
 	CTPrv.Add(CTPrv, vectorPointScalarMul(public.HVec, lT))
 	CTPrv.Add(CTPrv, vectorPointScalarMul(public.GVec, polyVectorCalc(nT, t)))
 
