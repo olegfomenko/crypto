@@ -145,10 +145,11 @@ func weightVectorMul(a []*big.Int, b []*big.Int, mu *big.Int) *big.Int {
 	}
 
 	res := big.NewInt(0)
-	step := new(big.Int).Set(mu)
+	exp := new(big.Int).Set(mu)
+
 	for i := 0; i < len(a); i++ {
-		res = add(res, mul(mul(a[i], b[i]), step))
-		step = mul(step, mu)
+		res = add(res, mul(mul(a[i], b[i]), exp))
+		exp = mul(exp, mu)
 	}
 	return res
 }
@@ -305,6 +306,10 @@ func diagInv(x *big.Int, n int) [][]*big.Int {
 func polyMul(a, b map[int]*big.Int) map[int]*big.Int { // res dimension will be len(a) + len(b) - 1
 	res := make(map[int]*big.Int)
 
+	if len(a) == 0 || len(b) == 0 {
+		panic("invalid polynom")
+	}
+
 	for i := range a {
 		for j := range b {
 			res[i+j] = mul(a[i], b[j])
@@ -317,16 +322,12 @@ func polyMul(a, b map[int]*big.Int) map[int]*big.Int { // res dimension will be 
 func polyAdd(a, b map[int]*big.Int) map[int]*big.Int { // res dimension will be max(len(a), len(b))
 	res := make(map[int]*big.Int)
 
-	if len(a) == 0 {
-		return b
-	}
-
-	if len(b) == 0 {
-		return a
+	if len(a) == 0 || len(b) == 0 {
+		panic("invalid polynom")
 	}
 
 	for k, v := range a {
-		res[k] = v
+		res[k] = new(big.Int).Set(v)
 	}
 
 	for k, v := range b {
@@ -339,16 +340,12 @@ func polyAdd(a, b map[int]*big.Int) map[int]*big.Int { // res dimension will be 
 func polySub(a, b map[int]*big.Int) map[int]*big.Int { // res dimension will be max(len(a), len(b))
 	res := make(map[int]*big.Int)
 
-	if len(a) == 0 {
-		return b
-	}
-
-	if len(b) == 0 {
-		return a
+	if len(a) == 0 || len(b) == 0 {
+		panic("invalid polynom")
 	}
 
 	for k, v := range a {
-		res[k] = v
+		res[k] = new(big.Int).Set(v)
 	}
 
 	for k, v := range b {
@@ -360,6 +357,10 @@ func polySub(a, b map[int]*big.Int) map[int]*big.Int { // res dimension will be 
 
 func polyVectorAdd(a, b map[int][]*big.Int) map[int][]*big.Int { // res dimension will be max(len(a), len(b))
 	res := make(map[int][]*big.Int)
+
+	if len(a) == 0 || len(b) == 0 {
+		panic("invalid polynom")
+	}
 
 	for k, v := range a {
 		res[k] = v
@@ -375,9 +376,13 @@ func polyVectorAdd(a, b map[int][]*big.Int) map[int][]*big.Int { // res dimensio
 func polyVectorMul(a, b map[int][]*big.Int) map[int]*big.Int { // res dimension will be len(a) + len(b) - 1
 	res := make(map[int]*big.Int)
 
+	if len(a) == 0 || len(b) == 0 {
+		panic("invalid polynom")
+	}
+
 	for i := range a {
 		for j := range b {
-			res[i+j] = vectorMul(a[i], b[j])
+			res[i+j] = add(res[i+j], vectorMul(a[i], b[j]))
 		}
 	}
 
@@ -406,6 +411,10 @@ func polyVectorCalc(poly map[int][]*big.Int, x *big.Int) []*big.Int {
 
 func polyVectorMulWeight(a, b map[int][]*big.Int, mu *big.Int) map[int]*big.Int { // res dimension will be len(a) + len(b) - 1
 	res := make(map[int]*big.Int)
+
+	if len(a) == 0 || len(b) == 0 {
+		panic("invalid polynom")
+	}
 
 	for i := range a {
 		for j := range b {
