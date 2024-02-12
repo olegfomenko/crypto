@@ -531,6 +531,7 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 		}
 
 		l_T3 = vectorMulOnScalar(l_T3, bint(2))
+
 		return append(l_T3, bint(0))
 	}()
 
@@ -546,6 +547,7 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 	f_T := polySub(psT, polyVectorMulWeight(nT, nT, ch_mu)) // 8
 	f_T[3] = add(f_T[3], v_)
 	f_T = polySub(f_T, polyVectorMul(cl_T, l_T))
+	fmt.Println("f'(T) =", f_T)
 
 	rv := zeros(8) // 8
 	rv[1] = func() *big.Int {
