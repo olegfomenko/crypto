@@ -23,4 +23,8 @@ func TestPolyVectorMulWeight(t *testing.T) {
 	a2mu := polyVectorMulWeight(a, a, mu)
 	res2 := polyCalc(a2mu, x)
 	fmt.Println(res2)
+
+	a2mu2 := polyVectorMulWeight2(a, a, mu)
+	res3 := polyCalc(a2mu2, x)
+	fmt.Println(res3)
 }

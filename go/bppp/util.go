@@ -314,10 +314,6 @@ func polyMul(a, b map[int]*big.Int) map[int]*big.Int { // res dimension will be 
 func polyAdd(a, b map[int]*big.Int) map[int]*big.Int { // res dimension will be max(len(a), len(b))
 	res := make(map[int]*big.Int)
 
-	if len(a) == 0 || len(b) == 0 {
-		panic("invalid polynom")
-	}
-
 	for k, v := range a {
 		res[k] = new(big.Int).Set(v)
 	}
@@ -332,10 +328,6 @@ func polyAdd(a, b map[int]*big.Int) map[int]*big.Int { // res dimension will be 
 func polySub(a, b map[int]*big.Int) map[int]*big.Int { // res dimension will be max(len(a), len(b))
 	res := make(map[int]*big.Int)
 
-	if len(a) == 0 || len(b) == 0 {
-		panic("invalid polynom")
-	}
-
 	for k, v := range a {
 		res[k] = new(big.Int).Set(v)
 	}
@@ -349,10 +341,6 @@ func polySub(a, b map[int]*big.Int) map[int]*big.Int { // res dimension will be 
 
 func polyVectorAdd(a, b map[int][]*big.Int) map[int][]*big.Int { // res dimension will be max(len(a), len(b))
 	res := make(map[int][]*big.Int)
-
-	if len(a) == 0 || len(b) == 0 {
-		panic("invalid polynom")
-	}
 
 	for k, v := range a {
 		res[k] = v
@@ -413,58 +401,51 @@ func polyVectorMulWeight(a, b map[int][]*big.Int, mu *big.Int) map[int]*big.Int 
 	return res
 }
 
-//func splitVectorPoly(a map[int][]*big.Int) []map[int]*big.Int {
-//	var res []map[int]*big.Int
-//
-//	dim := 0
-//	for _, v := range a {
-//		dim = len(v)
-//		break
-//	}
-//
-//	for i := 0; i < dim; i++ { // TODO make sure that a[0] exists
-//		res = append(res, make(map[int]*big.Int))
-//		for k, v := range a {
-//			res[i][k] = v[i]
-//		}
-//	}
-//
-//	return res
-//}
-//
-//func polyMulOnScalar(a map[int]*big.Int, mu *big.Int) map[int]*big.Int {
-//	res := make(map[int]*big.Int)
-//	for k, v := range a {
-//		res[k] = mul(v, mu)
-//	}
-//	return res
-//}
-//
-//// TODO remove
-//func polyVectorMulWeight2(a, b map[int][]*big.Int, mu *big.Int) map[int]*big.Int { // res dimension will be len(a) + len(b) - 1
-//	res := make(map[int]*big.Int)
-//
-//	polyA := splitVectorPoly(a)
-//	polyB := splitVectorPoly(b)
-//
-//	exp := new(big.Int).Set(mu)
-//
-//	for i := 0; i < len(polyA) || i < len(polyB); i++ {
-//		if i >= len(polyA) {
-//			res = polyAdd(res, polyMulOnScalar(polyB[i], exp))
-//			exp = mul(exp, mu)
-//			continue
-//		}
-//
-//		if i >= len(polyB) {
-//			res = polyAdd(res, polyMulOnScalar(polyA[i], exp))
-//			exp = mul(exp, mu)
-//			continue
-//		}
-//
-//		res = polyAdd(res, polyMulOnScalar(polyMul(polyA[i], polyB[i]), exp))
-//		exp = mul(exp, mu)
-//	}
-//
-//	return res
-//}
+// Only testing functions
+
+func splitVectorPoly(a map[int][]*big.Int) []map[int]*big.Int {
+	var res []map[int]*big.Int
+
+	dim := 0
+	for _, v := range a {
+		dim = len(v)
+		break
+	}
+
+	for i := 0; i < dim; i++ {
+		res = append(res, make(map[int]*big.Int))
+		for k, v := range a {
+			res[i][k] = v[i]
+		}
+	}
+
+	return res
+}
+
+func polyMulOnScalar(a map[int]*big.Int, mu *big.Int) map[int]*big.Int {
+	res := make(map[int]*big.Int)
+	for k, v := range a {
+		res[k] = mul(v, mu)
+	}
+	return res
+}
+
+func polyVectorMulWeight2(a, b map[int][]*big.Int, mu *big.Int) map[int]*big.Int { // res dimension will be len(a) + len(b) - 1
+	res := make(map[int]*big.Int)
+
+	polyA := splitVectorPoly(a)
+	polyB := splitVectorPoly(b)
+
+	if len(polyA) != len(polyB) {
+		panic("can not mull")
+	}
+
+	exp := new(big.Int).Set(mu)
+
+	for i := 0; i < len(polyA); i++ {
+		res = polyAdd(res, polyMulOnScalar(polyMul(polyA[i], polyB[i]), exp))
+		exp = mul(exp, mu)
+	}
+
+	return res
+}
