@@ -307,7 +307,7 @@ func polyMul(a, b map[int]*big.Int) map[int]*big.Int { // res dimension will be 
 
 	for i := range a {
 		for j := range b {
-			res[i+j] = mul(a[i], b[i])
+			res[i+j] = mul(a[i], b[j])
 		}
 	}
 
@@ -317,10 +317,20 @@ func polyMul(a, b map[int]*big.Int) map[int]*big.Int { // res dimension will be 
 func polyAdd(a, b map[int]*big.Int) map[int]*big.Int { // res dimension will be max(len(a), len(b))
 	res := make(map[int]*big.Int)
 
-	for i := range a {
-		for j := range b {
-			res[i+j] = add(a[i], b[i])
-		}
+	if len(a) == 0 {
+		return b
+	}
+
+	if len(b) == 0 {
+		return a
+	}
+
+	for k, v := range a {
+		res[k] = v
+	}
+
+	for k, v := range b {
+		res[k] = add(res[k], v)
 	}
 
 	return res
@@ -329,10 +339,20 @@ func polyAdd(a, b map[int]*big.Int) map[int]*big.Int { // res dimension will be 
 func polySub(a, b map[int]*big.Int) map[int]*big.Int { // res dimension will be max(len(a), len(b))
 	res := make(map[int]*big.Int)
 
-	for i := range a {
-		for j := range b {
-			res[i+j] = sub(a[i], b[i])
-		}
+	if len(a) == 0 {
+		return b
+	}
+
+	if len(b) == 0 {
+		return a
+	}
+
+	for k, v := range a {
+		res[k] = v
+	}
+
+	for k, v := range b {
+		res[k] = sub(res[k], v)
 	}
 
 	return res
@@ -341,22 +361,12 @@ func polySub(a, b map[int]*big.Int) map[int]*big.Int { // res dimension will be 
 func polyVectorAdd(a, b map[int][]*big.Int) map[int][]*big.Int { // res dimension will be max(len(a), len(b))
 	res := make(map[int][]*big.Int)
 
-	for i := range a {
-		for j := range b {
-			res[i+j] = vectorAdd(a[i], b[i])
-		}
+	for k, v := range a {
+		res[k] = v
 	}
 
-	return res
-}
-
-func polyVectorMulWeight(a, b map[int][]*big.Int, mu *big.Int) map[int]*big.Int { // res dimension will be len(a) + len(b) - 1
-	res := make(map[int]*big.Int)
-
-	for i := range a {
-		for j := range b {
-			res[i+j] = weightVectorMul(a[i], b[i], mu)
-		}
+	for k, v := range b {
+		res[k] = vectorAdd(res[k], v)
 	}
 
 	return res
@@ -367,7 +377,7 @@ func polyVectorMul(a, b map[int][]*big.Int) map[int]*big.Int { // res dimension 
 
 	for i := range a {
 		for j := range b {
-			res[i+j] = vectorMul(a[i], b[i])
+			res[i+j] = vectorMul(a[i], b[j])
 		}
 	}
 
@@ -393,3 +403,71 @@ func polyVectorCalc(poly map[int][]*big.Int, x *big.Int) []*big.Int {
 	}
 	return res
 }
+
+func polyVectorMulWeight(a, b map[int][]*big.Int, mu *big.Int) map[int]*big.Int { // res dimension will be len(a) + len(b) - 1
+	res := make(map[int]*big.Int)
+
+	for i := range a {
+		for j := range b {
+			res[i+j] = add(weightVectorMul(a[i], b[j], mu), res[i+j])
+		}
+	}
+
+	return res
+}
+
+//func splitVectorPoly(a map[int][]*big.Int) []map[int]*big.Int {
+//	var res []map[int]*big.Int
+//
+//	dim := 0
+//	for _, v := range a {
+//		dim = len(v)
+//		break
+//	}
+//
+//	for i := 0; i < dim; i++ { // TODO make sure that a[0] exists
+//		res = append(res, make(map[int]*big.Int))
+//		for k, v := range a {
+//			res[i][k] = v[i]
+//		}
+//	}
+//
+//	return res
+//}
+//
+//func polyMulOnScalar(a map[int]*big.Int, mu *big.Int) map[int]*big.Int {
+//	res := make(map[int]*big.Int)
+//	for k, v := range a {
+//		res[k] = mul(v, mu)
+//	}
+//	return res
+//}
+//
+//// TODO remove
+//func polyVectorMulWeight2(a, b map[int][]*big.Int, mu *big.Int) map[int]*big.Int { // res dimension will be len(a) + len(b) - 1
+//	res := make(map[int]*big.Int)
+//
+//	polyA := splitVectorPoly(a)
+//	polyB := splitVectorPoly(b)
+//
+//	exp := new(big.Int).Set(mu)
+//
+//	for i := 0; i < len(polyA) || i < len(polyB); i++ {
+//		if i >= len(polyA) {
+//			res = polyAdd(res, polyMulOnScalar(polyB[i], exp))
+//			exp = mul(exp, mu)
+//			continue
+//		}
+//
+//		if i >= len(polyB) {
+//			res = polyAdd(res, polyMulOnScalar(polyA[i], exp))
+//			exp = mul(exp, mu)
+//			continue
+//		}
+//
+//		res = polyAdd(res, polyMulOnScalar(polyMul(polyA[i], polyB[i]), exp))
+//		exp = mul(exp, mu)
+//	}
+//
+//	return res
+//}

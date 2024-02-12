@@ -43,7 +43,7 @@ type AcPrivate struct {
 func TestACProtocol(t *testing.T) {
 	// Scheme to proof that:
 	// pq =? r
-	// r = 15
+	// and public r = 15
 
 	p := bint(3)
 	q := bint(5)
