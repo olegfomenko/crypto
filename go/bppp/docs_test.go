@@ -499,9 +499,9 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 
 	cl_T := map[int][]*big.Int{ // 4
 		0: zeros(public.Nv),
-		1: clR,
-		2: clL,
-		3: vectorMulOnScalar(clO, inv(ch_delta)),
+		1: vectorMulOnScalar(clR, bint(2)),
+		2: vectorMulOnScalar(clL, bint(2)),
+		3: vectorMulOnScalar(clO, mul(inv(ch_delta), bint(2))),
 	}
 
 	if public.Fm {
