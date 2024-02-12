@@ -21,14 +21,6 @@ func values(n int) []*big.Int {
 	return res
 }
 
-func ones(n int) []*big.Int {
-	res := make([]*big.Int, n)
-	for i := range res {
-		res[i] = big.NewInt(1)
-	}
-	return res
-}
-
 func zeros(n int) []*big.Int {
 	res := make([]*big.Int, n)
 	for i := range res {
@@ -312,7 +304,7 @@ func polyMul(a, b map[int]*big.Int) map[int]*big.Int { // res dimension will be 
 
 	for i := range a {
 		for j := range b {
-			res[i+j] = mul(a[i], b[j])
+			res[i+j] = add(res[i+j], mul(a[i], b[j]))
 		}
 	}
 
@@ -400,10 +392,6 @@ func polyCalc(poly map[int]*big.Int, x *big.Int) *big.Int {
 func polyVectorCalc(poly map[int][]*big.Int, x *big.Int) []*big.Int {
 	var res []*big.Int
 	for k, v := range poly {
-		if res == nil {
-			res = zeros(len(v))
-		}
-
 		res = vectorAdd(res, vectorMulOnScalar(v, pow(x, bint(k))))
 	}
 	return res
