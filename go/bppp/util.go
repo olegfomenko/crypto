@@ -21,6 +21,14 @@ func values(n int) []*big.Int {
 	return res
 }
 
+func ones(n int) []*big.Int {
+	res := make([]*big.Int, n)
+	for i := range res {
+		res[i] = big.NewInt(1)
+	}
+	return res
+}
+
 func zeros(n int) []*big.Int {
 	res := make([]*big.Int, n)
 	for i := range res {
