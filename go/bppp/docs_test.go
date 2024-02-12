@@ -552,6 +552,9 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 	f_T[3] = add(f_T[3], v_)
 	f_T = polySub(f_T, polyVectorMul(cl_T, l_T))
 
+	fmt.Println("cl_T =", cl_T)
+	fmt.Println("l_T =", l_T)
+
 	rv := zeros(8) // 8
 	rv[1] = func() *big.Int {
 		rv1 := bint(0)
@@ -636,11 +639,21 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 
 	cT := append(cr_T[1:], polyVectorCalc(cl_T, t)...)
 
+	fmt.Println("n(T) = ", nT)
+
 	CT := new(bn256.G1).Add(PT, new(bn256.G1).ScalarMult(Cs, tinv))
 	CT.Add(CT, new(bn256.G1).ScalarMult(Co, ch_delta))
 	CT.Add(CT, new(bn256.G1).ScalarMult(Cl, t))
 	CT.Add(CT, new(bn256.G1).ScalarMult(Cr, t2))
 	CT.Add(CT, new(bn256.G1).ScalarMult(V_, t3))
+
+	fmt.Println("C =", CT)
+
+	CTPrv := new(bn256.G1).ScalarMult(public.G, add(vT, rT[0]))
+	CTPrv.Add(CTPrv, vectorPointScalarMul(public.HVec, lT))
+	CTPrv.Add(CTPrv, vectorPointScalarMul(public.GVec, polyVectorCalc(nT, t)))
+
+	fmt.Println("C =", CTPrv)
 
 	wnla(public.G, public.GVec, public.HVec, cT, CT, ch_ro, ch_mu, lT, polyVectorCalc(nT, t))
 }

@@ -430,7 +430,7 @@ func polyMulOnScalar(a map[int]*big.Int, mu *big.Int) map[int]*big.Int {
 	return res
 }
 
-func polyVectorMulWeight2(a, b map[int][]*big.Int, mu *big.Int) map[int]*big.Int { // res dimension will be len(a) + len(b) - 1
+func polyVectorMulWeight2(a, b map[int][]*big.Int, mu *big.Int) map[int]*big.Int {
 	res := make(map[int]*big.Int)
 
 	polyA := splitVectorPoly(a)
