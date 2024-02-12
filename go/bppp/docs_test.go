@@ -517,7 +517,7 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 	}
 
 	// Calc l_T for T^3
-	l_T_3 := func() []*big.Int {
+	l_T[3] = func() []*big.Int {
 		l_T3 := zeros(public.Nv - 1)
 
 		for i := 0; i < public.K; i++ {
@@ -533,8 +533,6 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 		l_T3 = vectorMulOnScalar(l_T3, bint(2))
 		return append(l_T3, bint(0))
 	}()
-
-	l_T[3] = l_T_3
 
 	n_T := map[int][]*big.Int{ // 4 * Nm
 		-1: ns,
