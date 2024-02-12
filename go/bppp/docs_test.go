@@ -580,7 +580,9 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 		add(mul(ch_delta, ro[6]), rl[5]),
 	}
 
-	f_ := []*big.Int{f_T[0], f_T[-1], f_T[1], f_T[2], f_T[3], f_T[5], f_T[6], f_T[7]}
+	fmt.Println("F(t): ", f_T)
+
+	f_ := []*big.Int{f_T[-1], f_T[-2], f_T[0], f_T[1], f_T[2], f_T[4], f_T[5], f_T[6]}
 
 	rs := vectorSub( // 8
 		append([]*big.Int{f_[0]}, vectorMulOnScalar(f_[1:], inv(ch_beta))...),
@@ -609,7 +611,7 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 	rT = vectorAdd(rT, vectorMulOnScalar(rv, t3))
 
 	// TODO WTF is this shit, why we need this?
-	vT := polyCalc(psT, t) // will not be used by prover, but should be used by verifier
+	vT := polyCalc(psT, t) // will not be used by prover
 	vT = add(vT, mul(v_, t3))
 	vT = add(vT, rT[0])
 
