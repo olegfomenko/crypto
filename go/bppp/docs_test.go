@@ -75,6 +75,8 @@ func TestACProtocol(t *testing.T) {
 
 	Wlw := vectorMulOnScalar(m, bint(14470)) // 2
 
+	fmt.Println("Wl*w =", Wlw)
+
 	// Wl = M(Wl*al + Wr*ar + Wo*ao) * w'
 	// where w' - right inverse for w
 	w := []*big.Int{bint(3), bint(5), bint(15)}
@@ -102,7 +104,11 @@ func TestACProtocol(t *testing.T) {
 		fmt.Println("Check circuit:", vectorAdd(check, vectorAdd(v, al)))
 	}
 
-	Wm := [][]*big.Int{{bint(0), bint(0), bint(1)}} // [0, 0, 1]
+	Wm := [][]*big.Int{
+		{bint(0), bint(0), bint(1)},
+	} // [0, 0, 1]
+
+	fmt.Println("Wm*w =", vectorMul(w, Wm[0]))
 
 	public := ACPublic{
 		Nm:   1,
@@ -132,6 +138,7 @@ func TestACProtocol(t *testing.T) {
 			if typ == 4 { // map all to no
 				return &index
 			}
+
 			return nil
 		},
 	}
@@ -407,19 +414,36 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 		}
 	}
 
+	{
+		// Check M martix calculated ok
+		Wlw := vectorAdd(matrixMulOnVector(lo, MllO), matrixMulOnVector(no, MlnO))
+		Wlw = vectorAdd(Wlw, vectorAdd(matrixMulOnVector(ll, MllL), matrixMulOnVector(nl, MlnL)))
+		Wlw = vectorAdd(Wlw, vectorAdd(matrixMulOnVector(lr, MllR), matrixMulOnVector(nr, MlnR)))
+		fmt.Println("Wl*w =", Wlw)
+
+		Wmw := vectorAdd(matrixMulOnVector(lo, MmlO), matrixMulOnVector(no, MmnO))
+		Wmw = vectorAdd(Wmw, vectorAdd(matrixMulOnVector(ll, MmlL), matrixMulOnVector(nl, MmnL)))
+		Wmw = vectorAdd(Wmw, vectorAdd(matrixMulOnVector(lr, MmlR), matrixMulOnVector(nr, MmnR)))
+		fmt.Println("Wm*w =", Wmw)
+	}
+
 	ch_mu := mul(ch_ro, ch_ro)
+
+	lcomb := func(i int) *big.Int {
+		return add(
+			mul(bbool(public.Fl), pow(ch_lambda, mul(bint(public.Nv), bint(i)))),
+			mul(bbool(public.Fm), pow(ch_mu, add(mul(bint(public.Nv), bint(i)), bint(1)))),
+		)
+	}
 
 	// Calculate linear combination of V
 
-	var V_ *bn256.G1 = &bn256.G1{} // set infinite
+	var V_ *bn256.G1 = new(bn256.G1).ScalarBaseMult(bint(0)) // set infinite
 
 	for i := 0; i < public.K; i++ {
 		V_ = V_.Add(V_, new(bn256.G1).ScalarMult(
 			public.V[i],
-			add(
-				mul(bbool(public.Fl), pow(ch_lambda, mul(bint(public.Nv), bint(i)))),
-				mul(bbool(public.Fm), pow(ch_mu, add(mul(bint(public.Nv), bint(i)), bint(1)))),
-			),
+			lcomb(i),
 		))
 	}
 
@@ -485,10 +509,7 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 	for i := 0; i < public.K; i++ {
 		v_ = add(v_, mul(
 			private.v[i][0],
-			add(
-				mul(bbool(public.Fl), pow(ch_lambda, mul(bint(public.Nv), bint(i)))),
-				mul(bbool(public.Fm), pow(ch_mu, add(mul(bint(public.Nv), bint(i)), bint(1)))),
-			),
+			lcomb(i),
 		))
 	}
 
@@ -523,10 +544,7 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 		for i := 0; i < public.K; i++ {
 			l_T3 = vectorAdd(l_T3, vectorMulOnScalar(
 				private.v[i][1:],
-				add(
-					mul(bbool(public.Fl), pow(ch_lambda, mul(bint(public.Nv), bint(i)))),
-					mul(bbool(public.Fm), pow(ch_mu, add(mul(bint(public.Nv), bint(i)), bint(1)))),
-				),
+				lcomb(i),
 			))
 		}
 
@@ -545,26 +563,46 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 	nT := polyVectorAdd(pnT, n_T)
 
 	f_T := polySub(psT, polyVectorMulWeight(nT, nT, ch_mu)) // 8
+	f_T = polySub(f_T, polyVectorMul(cl_T, l_T))            // TODO maybe add instead of sub
 	f_T[3] = add(f_T[3], v_)
-	f_T = polySub(f_T, polyVectorMul(cl_T, l_T))
-	fmt.Println("f'(T) =", f_T)
 
-	rv := zeros(8) // 8
-	rv[1] = func() *big.Int {
+	fmt.Println("f'(T) =", f_T)
+	fmt.Println("f'(T)[3] =", f_T[3])
+
+	rv := zeros(8)            // 8
+	rv[0] = func() *big.Int { // TODO maybe 0 instead of 1
 		rv1 := bint(0)
 
 		for i := 0; i < public.K; i++ {
 			rv1 = add(rv1, mul(
 				private.sv[i],
-				add(
-					mul(bbool(public.Fl), pow(ch_lambda, mul(bint(public.Nv), bint(i)))),
-					mul(bbool(public.Fm), pow(ch_mu, add(mul(bint(public.Nv), bint(i)), bint(1)))),
-				),
+				lcomb(i),
 			))
 		}
 
 		return mul(rv1, bint(2))
 	}()
+
+	// Check V_ correctness
+	{
+
+		// Calc linear combination of v[][0]
+		var v_vec = zeros(1)
+
+		for i := 0; i < public.K; i++ {
+			v_vec = vectorAdd(v_vec, vectorMulOnScalar(
+				private.v[i][1:],
+				lcomb(i),
+			))
+		}
+
+		v_vec = vectorMulOnScalar(v_vec, bint(2))
+
+		check := new(bn256.G1).ScalarMult(public.G, v_)
+		check.Add(check, vectorPointScalarMul(public.HVec, append(rv, v_vec...)))
+		fmt.Println("V_ =", V_)
+		fmt.Println("Check V_=", check)
+	}
 
 	sr := []*big.Int{
 		mul(ch_beta, mul(ch_delta, ro[1])),
@@ -608,7 +646,7 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 	// TODO WTF is this shit, why we need this?
 	vT := polyCalc(psT, t) // will not be used by prover
 	vT = add(vT, mul(v_, t3))
-	vT = add(vT, rT[0])
+	vT = add(vT, rT[0]) // TODO maybe - instead of +
 
 	fmt.Println("Should be WNLA secret: ", vT)
 
@@ -644,6 +682,26 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 	CTPrv.Add(CTPrv, vectorPointScalarMul(public.GVec, polyVectorCalc(nT, t)))
 
 	fmt.Println("C =", CTPrv)
+
+	{
+		CLeft := new(bn256.G1).ScalarMult(Cs, tinv)
+		CLeft.Add(CLeft, new(bn256.G1).ScalarMult(Co, ch_delta))
+		CLeft.Add(CLeft, new(bn256.G1).ScalarMult(Cl, t))
+		CLeft.Add(CLeft, new(bn256.G1).ScalarMult(Cr, t2))
+		CLeft.Add(CLeft, new(bn256.G1).ScalarMult(V_, t3))
+
+		fmt.Println("45 Check:", CLeft)
+
+		r0 := mul(rs[0], tinv)
+		r0 = add(r0, mul(ro[0], ch_delta))
+		r0 = add(r0, mul(rl[0], t))
+		r0 = add(r0, mul(rr[0], t2))
+
+		CTRight := new(bn256.G1).ScalarMult(public.G, add(mul(v_, t3), r0))
+		CTRight.Add(CTRight, vectorPointScalarMul(public.HVec, lT))
+		CTRight.Add(CTRight, vectorPointScalarMul(public.GVec, polyVectorCalc(n_T, t)))
+		fmt.Println("45 Check:", CTRight)
+	}
 
 	wnla(public.G, public.GVec, public.HVec, cT, CT, ch_ro, ch_mu, lT, polyVectorCalc(nT, t))
 }

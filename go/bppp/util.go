@@ -16,6 +16,8 @@ func values(n int) []*big.Int {
 		if err != nil {
 			panic(err)
 		}
+
+		res[i] = bint(2) // TODO remove
 	}
 
 	return res
@@ -277,6 +279,16 @@ func vectorMulOnMatrix(a []*big.Int, m [][]*big.Int) []*big.Int {
 		}
 
 		res = append(res, vectorMul(a, column))
+	}
+
+	return res
+}
+
+func matrixMulOnVector(a []*big.Int, m [][]*big.Int) []*big.Int {
+	var res []*big.Int
+
+	for i := 0; i < len(m); i++ {
+		res = append(res, vectorMul(a, m[i]))
 	}
 
 	return res
