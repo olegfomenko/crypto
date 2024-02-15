@@ -415,7 +415,7 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 	}
 
 	{
-		// Check M martix calculated ok
+		// Check M matrix calculated ok
 		Wlw := vectorAdd(matrixMulOnVector(lo, MllO), matrixMulOnVector(no, MlnO))
 		Wlw = vectorAdd(Wlw, vectorAdd(matrixMulOnVector(ll, MllL), matrixMulOnVector(nl, MlnL)))
 		Wlw = vectorAdd(Wlw, vectorAdd(matrixMulOnVector(lr, MllR), matrixMulOnVector(nr, MlnR)))
@@ -527,7 +527,6 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 	}
 
 	// Define f'(t):
-
 	f_ := make(map[int]*big.Int)
 
 	// calc ps(t)
@@ -541,7 +540,7 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 	f_[4] = add(f_[4], weightVectorMul(cnL, cnL, ch_mu))               // 2+2
 	f_[3] = add(f_[3], mul(bint(2), weightVectorMul(cnL, cnR, ch_mu))) // 2+1
 
-	f_[2] = weightVectorMul(cnL, cnL, ch_mu) // 1+1
+	f_[2] = weightVectorMul(cnR, cnR, ch_mu) // 1+1
 
 	// calc v_*T^3
 	f_[3] = add(f_[3], v_)
@@ -554,13 +553,13 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 	f_[5] = sub(f_[5], mul(bint(2), mul(inv(ch_delta), vectorMul(clO, lr))))  // 3+2
 	f_[6] = sub(f_[6], mul(bint(2), mul(inv(ch_delta), vectorMul(clO, v_1)))) // 3+3 // TODO check dimension correspondence
 
-	f_[1] = mul(bint(2), vectorMul(clL, ls))                            // 2-1
+	f_[1] = sub(f_[1], mul(bint(2), vectorMul(clL, ls)))                // 2-1
 	f_[2] = sub(f_[2], mul(bint(2), mul(ch_delta, vectorMul(clL, lo)))) // 2+0
 	f_[3] = sub(f_[3], mul(bint(2), vectorMul(clL, ll)))                // 2+1
 	f_[4] = sub(f_[4], mul(bint(2), vectorMul(clL, lr)))                // 2+2
 	f_[5] = sub(f_[5], mul(bint(2), vectorMul(clL, v_1)))               // 2+3 // TODO check dimension correspondence
 
-	f_[0] = vectorMul(clL, ls)                                          // 1-1
+	f_[0] = sub(f_[0], vectorMul(clR, ls))                              // 1-1
 	f_[1] = sub(f_[1], mul(bint(2), mul(ch_delta, vectorMul(clR, lo)))) // 1+0
 	f_[2] = sub(f_[2], mul(bint(2), vectorMul(clR, ll)))                // 1+1
 	f_[3] = sub(f_[3], mul(bint(2), vectorMul(clR, lr)))                // 1+2
@@ -571,7 +570,7 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 		vectorMulOnScalar(powvector(ch_lambda, public.Nv)[1:], bbool(public.Fl)),
 	) // TODO check dimension correspondence
 
-	f_[-1] = vectorMul(cl0, ls)                                         // 0-1
+	f_[-1] = sub(f_[-1], vectorMul(cl0, ls))                            // 0-1
 	f_[0] = sub(f_[0], mul(bint(2), mul(ch_delta, vectorMul(cl0, lo)))) // 0+0
 	f_[1] = sub(f_[1], mul(bint(2), vectorMul(cl0, ll)))                // 0+1
 	f_[2] = sub(f_[2], mul(bint(2), vectorMul(cl0, lr)))                // 0+2
@@ -589,7 +588,7 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 	// 2: nr+cnL
 	// 3: delta-1*cnO
 
-	f_[-2] = weightVectorMul(ns, ns, ch_mu) // -1-1
+	f_[-2] = sub(f_[-2], weightVectorMul(ns, ns, ch_mu)) // -1-1
 
 	f_[-1] = sub(f_[-1], mul(weightVectorMul(ns, no, ch_mu), mul(bint(2), ch_delta)))     // -1+0
 	f_[0] = sub(f_[0], mul(weightVectorMul(ns, vectorAdd(nl, cnR), ch_mu), bint(2)))      // -1+1
@@ -627,7 +626,7 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 	fcoef := []*big.Int{f_[-1], f_[-2], f_[0], f_[1], f_[2], f_[4], f_[5], f_[6]}
 
 	rs := vectorSub( // 8
-		append([]*big.Int{f_[0]}, vectorMulOnScalar(fcoef[1:], inv(ch_beta))...),
+		append([]*big.Int{fcoef[0]}, vectorMulOnScalar(fcoef[1:], inv(ch_beta))...),
 		sr,
 	)
 
@@ -704,11 +703,13 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 	vT := add(psT, mul(v_, t3))
 	vT = add(vT, r0)
 
-	CTPrv := new(bn256.G1).ScalarMult(public.G, vT)
-	CTPrv.Add(CTPrv, vectorPointScalarMul(public.HVec, lT))
-	CTPrv.Add(CTPrv, vectorPointScalarMul(public.GVec, nT))
+	{
+		CTPrv := new(bn256.G1).ScalarMult(public.G, vT)
+		CTPrv.Add(CTPrv, vectorPointScalarMul(public.HVec, lT))
+		CTPrv.Add(CTPrv, vectorPointScalarMul(public.GVec, nT))
 
-	fmt.Println("Check C(t) = ComNormInnerArg(l, n, v):", bytes.Equal(CT.Marshal(), CTPrv.Marshal()))
+		fmt.Println("Check C(t) = ComNormInnerArg(l, n, v):", bytes.Equal(CT.Marshal(), CTPrv.Marshal()))
+	}
 
 	{
 		CLeft := new(bn256.G1).ScalarMult(Cs, tinv)
