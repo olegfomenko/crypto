@@ -570,11 +570,11 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 		vectorMulOnScalar(powvector(ch_lambda, public.Nv)[1:], bbool(public.Fl)),
 	) // TODO check dimension correspondence
 
-	f_[-1] = sub(f_[-1], vectorMul(cl0, ls))                            // 0-1
-	f_[0] = sub(f_[0], mul(bint(2), mul(ch_delta, vectorMul(cl0, lo)))) // 0+0
-	f_[1] = sub(f_[1], mul(bint(2), vectorMul(cl0, ll)))                // 0+1
-	f_[2] = sub(f_[2], mul(bint(2), vectorMul(cl0, lr)))                // 0+2
-	f_[3] = sub(f_[3], mul(bint(2), vectorMul(cl0, v_1)))               // 0+3 // TODO check dimension correspondence
+	f_[-1] = sub(f_[-1], vectorMul(cl0, ls))              // 0-1
+	f_[0] = sub(f_[0], mul(ch_delta, vectorMul(cl0, lo))) // 0+0
+	f_[1] = sub(f_[1], vectorMul(cl0, ll))                // 0+1
+	f_[2] = sub(f_[2], vectorMul(cl0, lr))                // 0+2
+	f_[3] = sub(f_[3], vectorMul(cl0, v_1))               // 0+3 // TODO check dimension correspondence
 
 	// calc weight norm |n(t)|^2 for mu
 
@@ -703,6 +703,7 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 	vT := add(psT, mul(v_, t3))
 	vT = add(vT, r0)
 
+	// Check that calculated commitment equals to v*G + <l,H> + <n,G>
 	{
 		CTPrv := new(bn256.G1).ScalarMult(public.G, vT)
 		CTPrv.Add(CTPrv, vectorPointScalarMul(public.HVec, lT))
@@ -711,6 +712,7 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 		fmt.Println("Check C(t) = ComNormInnerArg(l, n, v):", bytes.Equal(CT.Marshal(), CTPrv.Marshal()))
 	}
 
+	// Check 45 eq from doc 510
 	{
 		CLeft := new(bn256.G1).ScalarMult(Cs, tinv)
 		CLeft.Add(CLeft, new(bn256.G1).ScalarMult(Co, ch_delta))
