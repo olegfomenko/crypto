@@ -156,7 +156,7 @@ func ArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate) {
 
 	rr, nr, lr, Cr := CommitR(public, private.wo, private.wr, private.f)
 
-	InnerArithmeticCircuitProtocol(public, private,
+	InnerArithmeticCircuitProtocol2(public, private,
 		[][]*big.Int{rl, rr, ro},
 		[][]*big.Int{nl, nr, no},
 		[][]*big.Int{ll, lr, lo},
@@ -244,6 +244,492 @@ func CommitR(public *ACPublic, wo, wr []*big.Int, f PartitionF) (rr []*big.Int, 
 	Cr.Add(Cr, vectorPointScalarMul(public.HVec, append(rr[1:], lr...)))
 	Cr.Add(Cr, vectorPointScalarMul(public.GVec, nr))
 	return
+}
+
+func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n, l [][]*big.Int, C []*bn256.G1) {
+	rl := r[0] // 8
+	rr := r[1] // 8
+	ro := r[2] // 8
+
+	ll := l[0] // Nv
+	lr := l[1] // Nv
+	lo := l[2] // Nv
+
+	nl := n[0] // Nm
+	nr := n[1] // Nm
+	no := n[2] // Nm
+
+	Cl := C[0]
+	Cr := C[1]
+	Co := C[2]
+
+	// Send Cl, Cr, Co to verifier
+
+	// Verifier generates challenges and sends to prover
+	ch_ro := values(1)[0]
+	ch_lambda := values(1)[0]
+	ch_beta := values(1)[0]
+	ch_delta := values(1)[0]
+
+	// Prover and Verifier computes
+
+	var MlnL [][]*big.Int // Nl * Nm
+	for i := 0; i < public.Nl; i++ {
+		MlnL = append(MlnL, public.Wl[i][:public.Nm])
+	}
+
+	var MmnL [][]*big.Int // Nm * Nm
+	for i := 0; i < public.Nm; i++ {
+		MmnL = append(MmnL, public.Wm[i][:public.Nm])
+	}
+
+	var MlnR [][]*big.Int // Nl*Nm
+	for i := 0; i < public.Nl; i++ {
+		MlnR = append(MlnR, public.Wl[i][public.Nm:public.Nm*2])
+	}
+
+	var MmnR [][]*big.Int // Nm*Nm
+	for i := 0; i < public.Nm; i++ {
+		MmnR = append(MmnR, public.Wm[i][public.Nm:public.Nm*2])
+	}
+
+	var WlO [][]*big.Int // Nl*No
+	for i := 0; i < public.Nl; i++ {
+		WlO = append(WlO, public.Wl[i][public.Nm*2:])
+	}
+
+	var WmO [][]*big.Int // Nm*No
+	for i := 0; i < public.Nm; i++ {
+		WmO = append(WmO, public.Wm[i][public.Nm*2:])
+	}
+
+	//ManO, a = {l,m}
+
+	var MlnO [][]*big.Int // Nl*Nm
+	for i := 0; i < public.Nl; i++ {
+		MlnO = append(MlnO, make([]*big.Int, public.Nm))
+
+		for j := 0; j < public.Nm; j++ {
+			MlnO[i][j] = big.NewInt(0)
+
+			if j_ := private.f(4, j); j_ != nil {
+				MlnO[i][j].Set(WlO[i][*j_])
+			}
+		}
+	}
+
+	var MmnO [][]*big.Int // Nm*Nm
+	for i := 0; i < public.Nm; i++ {
+		MmnO = append(MmnO, make([]*big.Int, public.Nm))
+
+		for j := 0; j < public.Nm; j++ {
+			MmnO[i][j] = big.NewInt(0)
+
+			if j_ := private.f(4, j); j_ != nil {
+				MmnO[i][j].Set(WmO[i][*j_])
+			}
+		}
+	}
+
+	// MalX, a = {l,m}, X = {L,R,O}
+
+	// L
+	var MllL [][]*big.Int // Nl*Nv
+	for i := 0; i < public.Nl; i++ {
+		MllL = append(MllL, make([]*big.Int, public.Nv))
+
+		for j := 0; j < public.Nv; j++ {
+			MllL[i][j] = big.NewInt(0)
+
+			if j_ := private.f(2, j); j_ != nil {
+				MllL[i][j].Set(WlO[i][*j_])
+			}
+		}
+	}
+
+	var MmlL [][]*big.Int // Nm*Nv
+	for i := 0; i < public.Nm; i++ {
+		MmlL = append(MmlL, make([]*big.Int, public.Nv))
+
+		for j := 0; j < public.Nv; j++ {
+			MmlL[i][j] = big.NewInt(0)
+
+			if j_ := private.f(2, j); j_ != nil {
+				MmlL[i][j].Set(WmO[i][*j_])
+			}
+		}
+	}
+
+	// R
+	var MllR [][]*big.Int // Nl*Nv
+	for i := 0; i < public.Nl; i++ {
+		MllR = append(MllR, make([]*big.Int, public.Nv))
+
+		for j := 0; j < public.Nv; j++ {
+			MllR[i][j] = big.NewInt(0)
+
+			if j_ := private.f(3, j); j_ != nil {
+				MllR[i][j].Set(WlO[i][*j_])
+			}
+		}
+	}
+
+	var MmlR [][]*big.Int // Nm*Nv
+	for i := 0; i < public.Nm; i++ {
+		MmlR = append(MmlR, make([]*big.Int, public.Nv))
+
+		for j := 0; j < public.Nv; j++ {
+			MmlR[i][j] = big.NewInt(0)
+
+			if j_ := private.f(3, j); j_ != nil {
+				MmlR[i][j].Set(WmO[i][*j_])
+			}
+		}
+	}
+
+	// O
+	var MllO [][]*big.Int // Nl*Nv
+	for i := 0; i < public.Nl; i++ {
+		MllO = append(MllO, make([]*big.Int, public.Nv))
+
+		for j := 0; j < public.Nv; j++ {
+			MllO[i][j] = big.NewInt(0)
+
+			if j_ := private.f(1, j); j_ != nil {
+				MllO[i][j].Set(WlO[i][*j_])
+			}
+		}
+	}
+
+	var MmlO [][]*big.Int // Nm*Nv
+	for i := 0; i < public.Nm; i++ {
+		MmlO = append(MmlO, make([]*big.Int, public.Nv))
+
+		for j := 0; j < public.Nv; j++ {
+			MmlO[i][j] = big.NewInt(0)
+
+			if j_ := private.f(1, j); j_ != nil {
+				MmlO[i][j].Set(WmO[i][*j_])
+			}
+		}
+	}
+
+	{
+		// Check M martix calculated ok
+		Wlw := vectorAdd(matrixMulOnVector(lo, MllO), matrixMulOnVector(no, MlnO))
+		Wlw = vectorAdd(Wlw, vectorAdd(matrixMulOnVector(ll, MllL), matrixMulOnVector(nl, MlnL)))
+		Wlw = vectorAdd(Wlw, vectorAdd(matrixMulOnVector(lr, MllR), matrixMulOnVector(nr, MlnR)))
+		fmt.Println("Wl*w =", Wlw)
+
+		Wmw := vectorAdd(matrixMulOnVector(lo, MmlO), matrixMulOnVector(no, MmnO))
+		Wmw = vectorAdd(Wmw, vectorAdd(matrixMulOnVector(ll, MmlL), matrixMulOnVector(nl, MmnL)))
+		Wmw = vectorAdd(Wmw, vectorAdd(matrixMulOnVector(lr, MmlR), matrixMulOnVector(nr, MmnR)))
+		fmt.Println("Wm*w =", Wmw)
+	}
+
+	ch_mu := mul(ch_ro, ch_ro)
+
+	lcomb := func(i int) *big.Int {
+		return add(
+			mul(bbool(public.Fl), pow(ch_lambda, mul(bint(public.Nv), bint(i)))),
+			mul(bbool(public.Fm), pow(ch_mu, add(mul(bint(public.Nv), bint(i)), bint(1)))),
+		)
+	}
+
+	// Calculate linear combination of V
+	V_ := func() *bn256.G1 {
+		var V_ = new(bn256.G1).ScalarBaseMult(bint(0)) // set infinite
+
+		for i := 0; i < public.K; i++ {
+			V_ = V_.Add(V_, new(bn256.G1).ScalarMult(
+				public.V[i],
+				lcomb(i),
+			))
+		}
+
+		return V_.ScalarMult(V_, bint(2))
+	}()
+
+	// Calculate lambda vector (nl == nv * k)
+	lambda := vectorAdd(
+		vectorTensorMul(vectorMulOnScalar(powvector(ch_lambda, public.Nv), ch_mu), powvector(pow(ch_mu, bint(public.Nv)), public.K)),
+		vectorTensorMul(powvector(ch_mu, public.Nv), powvector(pow(ch_lambda, bint(public.Nv)), public.K)),
+	)
+
+	lambda = vectorMulOnScalar(lambda, bbool(public.Fl && public.Fm))
+	lambda = vectorSub(powvector(ch_lambda, public.Nl), lambda) //Nl
+
+	// Calculate mu vector
+	mu := vectorMulOnScalar(powvector(ch_mu, public.Nm), ch_mu) // Nm
+
+	// Calculate coefficients clX, X = {L,R,O}
+	muDiagInv := diagInv(ch_mu, public.Nm) // Nm*Nm
+
+	cnL := vectorMulOnMatrix(vectorAdd(vectorMulOnMatrix(lambda, MlnL), vectorMulOnMatrix(mu, MmnL)), muDiagInv) // Nm
+	cnR := vectorMulOnMatrix(vectorAdd(vectorMulOnMatrix(lambda, MlnR), vectorMulOnMatrix(mu, MmnR)), muDiagInv) // Nm
+	cnO := vectorMulOnMatrix(vectorAdd(vectorMulOnMatrix(lambda, MlnO), vectorMulOnMatrix(mu, MmnO)), muDiagInv) // Nm
+
+	clL := vectorAdd(vectorMulOnMatrix(lambda, MllL), vectorMulOnMatrix(mu, MmlL)) // Nv
+	clR := vectorAdd(vectorMulOnMatrix(lambda, MllR), vectorMulOnMatrix(mu, MmlR)) // Nv
+	clO := vectorAdd(vectorMulOnMatrix(lambda, MllO), vectorMulOnMatrix(mu, MmlO)) // Nv
+
+	// Prover computes
+	ls := values(public.Nv) // Nv
+	ns := values(public.Nm) // Nm
+
+	// Calc linear combination of v[][0]
+	v_ := func() *big.Int {
+		v_ := bint(0)
+
+		for i := 0; i < public.K; i++ {
+			v_ = add(v_, mul(
+				private.v[i][0],
+				lcomb(i),
+			))
+		}
+
+		return mul(v_, bint(2))
+	}()
+
+	rv := zeros(8)            // 8
+	rv[0] = func() *big.Int { // TODO maybe 0 instead of 1
+		rv1 := bint(0)
+
+		for i := 0; i < public.K; i++ {
+			rv1 = add(rv1, mul(
+				private.sv[i],
+				lcomb(i),
+			))
+		}
+
+		return mul(rv1, bint(2))
+	}()
+
+	// Calc linear combination of v[][1:]
+	v_1 := func() []*big.Int {
+		var v_1 = zeros(1)
+
+		for i := 0; i < public.K; i++ {
+			v_1 = vectorAdd(v_1, vectorMulOnScalar(
+				private.v[i][1:],
+				lcomb(i),
+			))
+		}
+
+		return vectorMulOnScalar(v_1, bint(2))
+	}()
+
+	// Check V_ correctness
+	{
+		check := new(bn256.G1).ScalarMult(public.G, v_)
+		check.Add(check, vectorPointScalarMul(public.HVec, append(rv, v_1...)))
+		fmt.Println("Check V_ correct:", bytes.Equal(V_.Marshal(), check.Marshal()))
+	}
+
+	// Define f'(t):
+
+	f_ := make(map[int]*big.Int)
+
+	// calc ps(t)
+	f_[3] = add(vectorMul(lambda, public.Al), vectorMul(mu, public.Am))
+
+	// calc pn(t)^2 by mu
+	f_[6] = weightVectorMul(vectorMulOnScalar(cnO, inv(ch_delta)), vectorMulOnScalar(cnO, inv(ch_delta)), ch_mu) // 3+3
+	f_[5] = mul(bint(2), weightVectorMul(vectorMulOnScalar(cnO, inv(ch_delta)), cnL, ch_mu))                     // 3+2
+	f_[4] = mul(bint(2), weightVectorMul(vectorMulOnScalar(cnO, inv(ch_delta)), cnR, ch_mu))                     // 3+1
+
+	f_[4] = add(f_[4], weightVectorMul(cnL, cnL, ch_mu))               // 2+2
+	f_[3] = add(f_[3], mul(bint(2), weightVectorMul(cnL, cnR, ch_mu))) // 2+1
+
+	f_[2] = weightVectorMul(cnL, cnL, ch_mu) // 1+1
+
+	// calc v_*T^3
+	f_[3] = add(f_[3], v_)
+
+	// calc <cl_, l_>
+
+	f_[2] = sub(f_[2], mul(bint(2), mul(inv(ch_delta), vectorMul(clO, ls))))  // 3-1
+	f_[3] = sub(f_[3], mul(bint(2), vectorMul(clO, lo)))                      // 3+0
+	f_[4] = sub(f_[4], mul(bint(2), mul(inv(ch_delta), vectorMul(clO, ll))))  // 3+1
+	f_[5] = sub(f_[5], mul(bint(2), mul(inv(ch_delta), vectorMul(clO, lr))))  // 3+2
+	f_[6] = sub(f_[6], mul(bint(2), mul(inv(ch_delta), vectorMul(clO, v_1)))) // 3+3 // TODO check dimension correspondence
+
+	f_[1] = mul(bint(2), vectorMul(clL, ls))                            // 2-1
+	f_[2] = sub(f_[2], mul(bint(2), mul(ch_delta, vectorMul(clL, lo)))) // 2+0
+	f_[3] = sub(f_[3], mul(bint(2), vectorMul(clL, ll)))                // 2+1
+	f_[4] = sub(f_[4], mul(bint(2), vectorMul(clL, lr)))                // 2+2
+	f_[5] = sub(f_[5], mul(bint(2), vectorMul(clL, v_1)))               // 2+3 // TODO check dimension correspondence
+
+	f_[0] = vectorMul(clL, ls)                                          // 1-1
+	f_[1] = sub(f_[1], mul(bint(2), mul(ch_delta, vectorMul(clR, lo)))) // 1+0
+	f_[2] = sub(f_[2], mul(bint(2), vectorMul(clR, ll)))                // 1+1
+	f_[3] = sub(f_[3], mul(bint(2), vectorMul(clR, lr)))                // 1+2
+	f_[4] = sub(f_[4], mul(bint(2), vectorMul(clR, v_1)))               // 1+3 // TODO check dimension correspondence
+
+	cl0 := vectorAdd(
+		vectorMulOnScalar(vectorMulOnScalar(powvector(ch_mu, public.Nv)[1:], ch_mu), bbool(public.Fm)),
+		vectorMulOnScalar(powvector(ch_lambda, public.Nv)[1:], bbool(public.Fl)),
+	) // TODO check dimension correspondence
+
+	f_[-1] = vectorMul(cl0, ls)                                         // 0-1
+	f_[0] = sub(f_[0], mul(bint(2), mul(ch_delta, vectorMul(cl0, lo)))) // 0+0
+	f_[1] = sub(f_[1], mul(bint(2), vectorMul(cl0, ll)))                // 0+1
+	f_[2] = sub(f_[2], mul(bint(2), vectorMul(cl0, lr)))                // 0+2
+	f_[3] = sub(f_[3], mul(bint(2), vectorMul(cl0, v_1)))               // 0+3 // TODO check dimension correspondence
+
+	// calc weight norm |n(t)|^2 for mu
+
+	// n(t) = pn(t) + n_(t) =
+	// t-1*ns + delta*no + t *nl + t2*nr + delta-1*T3*cnO + t2*cnl + t*cnr =
+	// t-1*ns + delta*no + t * (nl + cnR) + t2 * (nr + cnL) + delta-1*T3*cnO
+
+	// -1: ns
+	// 0: delta*no
+	// 1: nl+cnR
+	// 2: nr+cnL
+	// 3: delta-1*cnO
+
+	f_[-2] = weightVectorMul(ns, ns, ch_mu) // -1-1
+
+	f_[-1] = sub(f_[-1], mul(weightVectorMul(ns, no, ch_mu), mul(bint(2), ch_delta)))     // -1+0
+	f_[0] = sub(f_[0], mul(weightVectorMul(ns, vectorAdd(nl, cnR), ch_mu), bint(2)))      // -1+1
+	f_[1] = sub(f_[1], mul(weightVectorMul(ns, vectorAdd(nr, cnL), ch_mu), bint(2)))      // -1+2
+	f_[2] = sub(f_[2], mul(weightVectorMul(ns, cnO, ch_mu), mul(bint(2), inv(ch_delta)))) // -1+3
+
+	f_[0] = sub(f_[0], weightVectorMul(vectorMulOnScalar(no, ch_delta), vectorMulOnScalar(no, ch_delta), ch_mu)) // 0 + 0
+	f_[1] = sub(f_[1], mul(weightVectorMul(no, vectorAdd(nl, cnR), ch_mu), mul(bint(2), ch_delta)))              // 0+1
+	f_[2] = sub(f_[2], mul(weightVectorMul(no, vectorAdd(nr, cnL), ch_mu), mul(bint(2), ch_delta)))              // 0+2
+	f_[3] = sub(f_[3], mul(weightVectorMul(no, cnO, ch_mu), bint(2)))                                            // 0+3
+
+	f_[2] = sub(f_[2], weightVectorMul(vectorAdd(nl, cnR), vectorAdd(nl, cnR), ch_mu))                    // 1 + 1
+	f_[3] = sub(f_[3], mul(weightVectorMul(vectorAdd(nl, cnR), vectorAdd(nr, cnL), ch_mu), bint(2)))      // 1+2
+	f_[4] = sub(f_[4], mul(weightVectorMul(vectorAdd(nl, cnR), cnO, ch_mu), mul(bint(2), inv(ch_delta)))) // 1+3
+
+	f_[4] = sub(f_[4], weightVectorMul(vectorAdd(nr, cnL), vectorAdd(nr, cnL), ch_mu))                    // 2 + 2
+	f_[5] = sub(f_[5], mul(weightVectorMul(vectorAdd(nr, cnL), cnO, ch_mu), mul(bint(2), inv(ch_delta)))) // 2+3
+
+	f_[6] = sub(f_[6], weightVectorMul(vectorMulOnScalar(cnO, inv(ch_delta)), vectorMulOnScalar(cnO, inv(ch_delta)), ch_mu)) // 3 + 3
+
+	fmt.Println("f'(T) =", f_)
+	fmt.Println("f'(T)[3] =", f_[3])
+
+	sr := []*big.Int{
+		mul(ch_beta, mul(ch_delta, ro[1])),
+		bint(0),
+		add(mul(inv(ch_beta), mul(ch_delta, ro[0])), rl[1]),
+		add(add(mul(ch_delta, ro[2]), mul(inv(ch_beta), rl[0])), rr[1]),
+		add(add(add(mul(ch_delta, ro[3]), rl[2]), rv[1]), mul(inv(ch_beta), rr[0])),
+		add(rl[4], rr[3]),
+		add(mul(ch_delta, ro[5]), rr[4]),
+		add(mul(ch_delta, ro[6]), rl[5]),
+	}
+
+	fcoef := []*big.Int{f_[-1], f_[-2], f_[0], f_[1], f_[2], f_[4], f_[5], f_[6]}
+
+	rs := vectorSub( // 8
+		append([]*big.Int{f_[0]}, vectorMulOnScalar(fcoef[1:], inv(ch_beta))...),
+		sr,
+	)
+
+	Cs := new(bn256.G1).ScalarMult(public.G, rs[0])
+	Cs.Add(Cs, vectorPointScalarMul(public.HVec, append(rs[1:], ls...)))
+	Cs.Add(Cs, vectorPointScalarMul(public.GVec, ns))
+
+	// Prover sends Cs to verifier
+
+	// Verifier selects random t and sends to Prover
+	t := values(1)[0]
+
+	// Prover computes
+
+	tinv := inv(t)
+	t2 := mul(t, t)
+	t3 := mul(t2, t)
+
+	r0 := mul(rs[0], tinv)
+	r0 = add(r0, mul(ro[0], ch_delta))
+	r0 = add(r0, mul(rl[0], t))
+	r0 = add(r0, mul(rr[0], t2))
+
+	lT := vectorMulOnScalar(append(rs[1:], ls...), tinv)
+	lT = vectorAdd(lT, vectorMulOnScalar(append(ro[1:], lo...), ch_delta))
+	lT = vectorAdd(lT, vectorMulOnScalar(append(rl[1:], ll...), t))
+	lT = vectorAdd(lT, vectorMulOnScalar(append(rr[1:], lr...), t2))
+	lT = vectorAdd(lT, vectorMulOnScalar(append(rv, v_1...), t3))
+
+	pnT := vectorMulOnScalar(cnR, t)
+	pnT = vectorAdd(pnT, vectorMulOnScalar(cnL, t2))
+	pnT = vectorAdd(pnT, vectorMulOnScalar(cnO, mul(inv(ch_delta), t3)))
+
+	psT := weightVectorMul(pnT, pnT, ch_mu)
+	psT = add(psT, mul(vectorMul(lambda, public.Al), t3))
+	psT = add(psT, mul(vectorMul(mu, public.Am), t3))
+
+	n_T := vectorMulOnScalar(ns, tinv)
+	n_T = vectorAdd(n_T, vectorMulOnScalar(no, ch_delta))
+	n_T = vectorAdd(n_T, vectorMulOnScalar(nl, t))
+	n_T = vectorAdd(n_T, vectorMulOnScalar(nr, t2))
+
+	nT := vectorAdd(pnT, n_T)
+
+	// Prover and verifier computes
+	PT := new(bn256.G1).ScalarMult(public.G, psT)
+	PT.Add(PT, vectorPointScalarMul(public.GVec, pnT))
+
+	cr_T := []*big.Int{
+		bint(1),
+		mul(ch_beta, tinv),
+		mul(ch_beta, t),
+		mul(ch_beta, t2),
+		mul(ch_beta, t3),
+		mul(ch_beta, mul(t2, t3)),
+		mul(ch_beta, mul(t3, t3)),
+		mul(ch_beta, mul(mul(t3, t), t3)),
+	} // 8
+
+	cl_T := vectorMulOnScalar(clO, mul(t3, inv(ch_delta)))
+	cl_T = vectorAdd(cl_T, vectorMulOnScalar(clL, t2))
+	cl_T = vectorAdd(cl_T, vectorMulOnScalar(clR, t))
+	cl_T = vectorMulOnScalar(cl_T, bint(2))
+	cl_T = vectorAdd(cl_T, clO)
+
+	cT := append(cr_T[1:], cl_T...)
+
+	CT := new(bn256.G1).Add(PT, new(bn256.G1).ScalarMult(Cs, tinv))
+	CT.Add(CT, new(bn256.G1).ScalarMult(Co, ch_delta))
+	CT.Add(CT, new(bn256.G1).ScalarMult(Cl, t))
+	CT.Add(CT, new(bn256.G1).ScalarMult(Cr, t2))
+	CT.Add(CT, new(bn256.G1).ScalarMult(V_, t3))
+
+	vT := add(psT, mul(v_, t3))
+	vT = add(vT, r0)
+
+	CTPrv := new(bn256.G1).ScalarMult(public.G, vT)
+	CTPrv.Add(CTPrv, vectorPointScalarMul(public.HVec, lT))
+	CTPrv.Add(CTPrv, vectorPointScalarMul(public.GVec, nT))
+
+	fmt.Println("Check C(t) = ComNormInnerArg(l, n, v):", bytes.Equal(CT.Marshal(), CTPrv.Marshal()))
+
+	{
+		CLeft := new(bn256.G1).ScalarMult(Cs, tinv)
+		CLeft.Add(CLeft, new(bn256.G1).ScalarMult(Co, ch_delta))
+		CLeft.Add(CLeft, new(bn256.G1).ScalarMult(Cl, t))
+		CLeft.Add(CLeft, new(bn256.G1).ScalarMult(Cr, t2))
+		CLeft.Add(CLeft, new(bn256.G1).ScalarMult(V_, t3))
+
+		r0 := mul(rs[0], tinv)
+		r0 = add(r0, mul(ro[0], ch_delta))
+		r0 = add(r0, mul(rl[0], t))
+		r0 = add(r0, mul(rr[0], t2))
+
+		CTRight := new(bn256.G1).ScalarMult(public.G, add(mul(v_, t3), r0))
+		CTRight.Add(CTRight, vectorPointScalarMul(public.HVec, lT))
+		CTRight.Add(CTRight, vectorPointScalarMul(public.GVec, n_T))
+		fmt.Println("Check (45):", bytes.Equal(CLeft.Marshal(), CTRight.Marshal()))
+	}
+
+	fmt.Println("Should be WNLA secret: ", vT)
+	wnla(public.G, public.GVec, public.HVec, cT, CT, ch_ro, ch_mu, lT, nT)
 }
 
 func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, l [][]*big.Int, C []*bn256.G1) {
@@ -637,20 +1123,46 @@ func InnerArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate, r, n, 
 	t2 := mul(t, t)
 	t3 := mul(t2, t)
 
-	rT := vectorMulOnScalar(rs, tinv) // 8
-	rT = vectorAdd(rT, vectorMulOnScalar(ro, ch_delta))
-	rT = vectorAdd(rT, vectorMulOnScalar(rl, t))
-	rT = vectorAdd(rT, vectorMulOnScalar(rr, t2))
-	rT = vectorAdd(rT, vectorMulOnScalar(rv, t3))
+	//rT := vectorMulOnScalar(rs, tinv) // 7
+	//rT = vectorAdd(rT, vectorMulOnScalar(ro, ch_delta))
+	//rT = vectorAdd(rT, vectorMulOnScalar(rl, t))
+	//rT = vectorAdd(rT, vectorMulOnScalar(rr, t2))
+	//
+	//rT = vectorAdd(rT, vectorMulOnScalar(rv, t3))
 
-	// TODO WTF is this shit, why we need this?
+	r0 := mul(rs[0], tinv)
+	r0 = add(r0, mul(ro[0], ch_delta))
+	r0 = add(r0, mul(rl[0], t))
+	r0 = add(r0, mul(rr[0], t2))
+
 	vT := polyCalc(psT, t) // will not be used by prover
 	vT = add(vT, mul(v_, t3))
-	vT = add(vT, rT[0]) // TODO maybe - instead of +
+	vT = add(vT, r0) // TODO maybe - instead of +
 
 	fmt.Println("Should be WNLA secret: ", vT)
 
-	lT := append(rT[1:], polyVectorCalc(l_T, t)...)
+	v_1plus := func() []*big.Int {
+		v1 := zeros(public.Nv - 1)
+
+		for i := 0; i < public.K; i++ {
+			v1 = vectorAdd(v1, vectorMulOnScalar(
+				private.v[i][1:],
+				lcomb(i),
+			))
+		}
+
+		v1 = vectorMulOnScalar(v1, bint(2))
+
+		return v1
+	}()
+
+	lT := vectorMulOnScalar(append(rs[1:], ls...), tinv)
+	lT = vectorAdd(lT, vectorMulOnScalar(append(ro[1:], lo...), ch_delta))
+	lT = vectorAdd(lT, vectorMulOnScalar(append(rl[1:], ll...), t))
+	lT = vectorAdd(lT, vectorMulOnScalar(append(rr[1:], lr...), t2))
+	lT = vectorAdd(lT, vectorMulOnScalar(append(rv, v_1plus...), t3))
+
+	//lT := append(rT[1:], polyVectorCalc(l_T, t)...)
 
 	// Prover and verifier computes
 	PT := new(bn256.G1).ScalarMult(public.G, polyCalc(psT, t))
@@ -735,18 +1247,7 @@ func TestWNLA(t *testing.T) {
 
 func wnla(g *bn256.G1, G, H []*bn256.G1, c []*big.Int, C *bn256.G1, ro, mu *big.Int, l, n []*big.Int) {
 	roinv := inv(ro)
-	fmt.Println("Running WNLA protocol...")
-
-	fmt.Println("WNLA secret: ", add(vectorMul(c, l), weightVectorMul(n, n, mu)))
-
-	//_v := add(vectorMul(c, l), weightVectorMul(n, n, mu))
-	//
-	//_C := new(bn256.G1).ScalarMult(g, _v)
-	//_C.Add(_C, vectorPointScalarMul(H, l))
-	//_C.Add(_C, vectorPointScalarMul(G, n))
-	//
-	//fmt.Println("Evaluated C:", _C)
-	//fmt.Println("Passed C:", C)
+	fmt.Println("Running WNLA protocol... WNLA secret: ", add(vectorMul(c, l), weightVectorMul(n, n, mu)))
 
 	if len(l)+len(n) < 6 {
 		// Prover sends l, n to Verifier
