@@ -718,11 +718,6 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 		CLeft.Add(CLeft, new(bn256.G1).ScalarMult(Cr, t2))
 		CLeft.Add(CLeft, new(bn256.G1).ScalarMult(V_, t3))
 
-		r0 := mul(rs[0], tinv)
-		r0 = add(r0, mul(ro[0], ch_delta))
-		r0 = add(r0, mul(rl[0], t))
-		r0 = add(r0, mul(rr[0], t2))
-
 		CTRight := new(bn256.G1).ScalarMult(public.G, add(mul(v_, t3), r0))
 		CTRight.Add(CTRight, vectorPointScalarMul(public.HVec, lT))
 		CTRight.Add(CTRight, vectorPointScalarMul(public.GVec, n_T))
