@@ -414,18 +414,20 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 		}
 	}
 
-	{
-		// Check M matrix calculated ok
-		Wlw := vectorAdd(matrixMulOnVector(lo, MllO), matrixMulOnVector(no, MlnO))
-		Wlw = vectorAdd(Wlw, vectorAdd(matrixMulOnVector(ll, MllL), matrixMulOnVector(nl, MlnL)))
-		Wlw = vectorAdd(Wlw, vectorAdd(matrixMulOnVector(lr, MllR), matrixMulOnVector(nr, MlnR)))
-		fmt.Println("Wl*w =", Wlw)
+	//////////
 
-		Wmw := vectorAdd(matrixMulOnVector(lo, MmlO), matrixMulOnVector(no, MmnO))
-		Wmw = vectorAdd(Wmw, vectorAdd(matrixMulOnVector(ll, MmlL), matrixMulOnVector(nl, MmnL)))
-		Wmw = vectorAdd(Wmw, vectorAdd(matrixMulOnVector(lr, MmlR), matrixMulOnVector(nr, MmnR)))
-		fmt.Println("Wm*w =", Wmw)
-	}
+	// Check M matrix calculated ok
+	Wlw := vectorAdd(matrixMulOnVector(lo, MllO), matrixMulOnVector(no, MlnO))
+	Wlw = vectorAdd(Wlw, vectorAdd(matrixMulOnVector(ll, MllL), matrixMulOnVector(nl, MlnL)))
+	Wlw = vectorAdd(Wlw, vectorAdd(matrixMulOnVector(lr, MllR), matrixMulOnVector(nr, MlnR)))
+	fmt.Println("Wl*w =", Wlw)
+
+	Wmw := vectorAdd(matrixMulOnVector(lo, MmlO), matrixMulOnVector(no, MmnO))
+	Wmw = vectorAdd(Wmw, vectorAdd(matrixMulOnVector(ll, MmlL), matrixMulOnVector(nl, MmnL)))
+	Wmw = vectorAdd(Wmw, vectorAdd(matrixMulOnVector(lr, MmlR), matrixMulOnVector(nr, MmnR)))
+	fmt.Println("Wm*w =", Wmw)
+
+	/////////
 
 	ch_mu := mul(ch_ro, ch_ro)
 
@@ -461,17 +463,30 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 
 	// Calculate mu vector
 	mu := vectorMulOnScalar(powvector(ch_mu, public.Nm), ch_mu) // Nm
+	fmt.Println("mu =", mu)
+
+	/////////
+
+	// Check Eq. 34
+
+	c34 := vectorMul(lambda, vectorAdd(vectorAdd(Wlw, []*big.Int{bint(3), bint(5)}), public.Al))
+	c34 = add(c34, weightVectorMul(private.wl, private.wr, ch_mu))
+	c34 = sub(c34, vectorMul(mu, Wmw))
+	fmt.Println("Check Eq. 34 =", c34)
+
+	///////////
 
 	// Calculate coefficients clX, X = {L,R,O}
 	muDiagInv := diagInv(ch_mu, public.Nm) // Nm*Nm
 
-	cnL := vectorMulOnMatrix(vectorAdd(vectorMulOnMatrix(lambda, MlnL), vectorMulOnMatrix(mu, MmnL)), muDiagInv) // Nm
-	cnR := vectorMulOnMatrix(vectorAdd(vectorMulOnMatrix(lambda, MlnR), vectorMulOnMatrix(mu, MmnR)), muDiagInv) // Nm
-	cnO := vectorMulOnMatrix(vectorAdd(vectorMulOnMatrix(lambda, MlnO), vectorMulOnMatrix(mu, MmnO)), muDiagInv) // Nm
+	// TODO maybe - instead of +
+	cnL := vectorMulOnMatrix(vectorSub(vectorMulOnMatrix(lambda, MlnL), vectorMulOnMatrix(mu, MmnL)), muDiagInv) // Nm
+	cnR := vectorMulOnMatrix(vectorSub(vectorMulOnMatrix(lambda, MlnR), vectorMulOnMatrix(mu, MmnR)), muDiagInv) // Nm
+	cnO := vectorMulOnMatrix(vectorSub(vectorMulOnMatrix(lambda, MlnO), vectorMulOnMatrix(mu, MmnO)), muDiagInv) // Nm
 
-	clL := vectorAdd(vectorMulOnMatrix(lambda, MllL), vectorMulOnMatrix(mu, MmlL)) // Nv
-	clR := vectorAdd(vectorMulOnMatrix(lambda, MllR), vectorMulOnMatrix(mu, MmlR)) // Nv
-	clO := vectorAdd(vectorMulOnMatrix(lambda, MllO), vectorMulOnMatrix(mu, MmlO)) // Nv
+	clL := vectorSub(vectorMulOnMatrix(lambda, MllL), vectorMulOnMatrix(mu, MmlL)) // Nv
+	clR := vectorSub(vectorMulOnMatrix(lambda, MllR), vectorMulOnMatrix(mu, MmlR)) // Nv
+	clO := vectorSub(vectorMulOnMatrix(lambda, MllO), vectorMulOnMatrix(mu, MmlO)) // Nv
 
 	// Prover computes
 	ls := values(public.Nv) // Nv
@@ -530,15 +545,15 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 	f_ := make(map[int]*big.Int)
 
 	// calc ps(t)
-	f_[3] = add(vectorMul(lambda, public.Al), vectorMul(mu, public.Am))
+	f_[3] = mul(bint(2), add(vectorMul(lambda, public.Al), vectorMul(mu, public.Am)))
 
 	// calc pn(t)^2 by mu
-	f_[6] = weightVectorMul(vectorMulOnScalar(cnO, inv(ch_delta)), vectorMulOnScalar(cnO, inv(ch_delta)), ch_mu) // 3+3
-	f_[5] = mul(bint(2), weightVectorMul(vectorMulOnScalar(cnO, inv(ch_delta)), cnL, ch_mu))                     // 3+2
-	f_[4] = mul(bint(2), weightVectorMul(vectorMulOnScalar(cnO, inv(ch_delta)), cnR, ch_mu))                     // 3+1
+	f_[6] = add(f_[6], weightVectorMul(vectorMulOnScalar(cnO, inv(ch_delta)), vectorMulOnScalar(cnO, inv(ch_delta)), ch_mu)) // 3+3
+	f_[5] = sub(f_[5], mul(bint(2), weightVectorMul(vectorMulOnScalar(cnO, inv(ch_delta)), cnL, ch_mu)))                     // 3+2
+	f_[4] = add(f_[4], mul(bint(2), weightVectorMul(vectorMulOnScalar(cnO, inv(ch_delta)), cnR, ch_mu)))                     // 3+1
 
 	f_[4] = add(f_[4], weightVectorMul(cnL, cnL, ch_mu))               // 2+2
-	f_[3] = add(f_[3], mul(bint(2), weightVectorMul(cnL, cnR, ch_mu))) // 2+1
+	f_[3] = sub(f_[3], mul(bint(2), weightVectorMul(cnL, cnR, ch_mu))) // 2+1
 
 	f_[2] = weightVectorMul(cnR, cnR, ch_mu) // 1+1
 
@@ -548,21 +563,21 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 	// calc <cl_, l_>
 
 	f_[2] = sub(f_[2], mul(bint(2), mul(inv(ch_delta), vectorMul(clO, ls))))  // 3-1
-	f_[3] = sub(f_[3], mul(bint(2), vectorMul(clO, lo)))                      // 3+0
+	f_[3] = add(f_[3], mul(bint(2), vectorMul(clO, lo)))                      // 3+0
 	f_[4] = sub(f_[4], mul(bint(2), mul(inv(ch_delta), vectorMul(clO, ll))))  // 3+1
-	f_[5] = sub(f_[5], mul(bint(2), mul(inv(ch_delta), vectorMul(clO, lr))))  // 3+2
+	f_[5] = add(f_[5], mul(bint(2), mul(inv(ch_delta), vectorMul(clO, lr))))  // 3+2
 	f_[6] = sub(f_[6], mul(bint(2), mul(inv(ch_delta), vectorMul(clO, v_1)))) // 3+3 // TODO check dimension correspondence
 
-	f_[1] = sub(f_[1], mul(bint(2), vectorMul(clL, ls)))                // 2-1
+	f_[1] = add(f_[1], mul(bint(2), vectorMul(clL, ls)))                // 2-1
 	f_[2] = sub(f_[2], mul(bint(2), mul(ch_delta, vectorMul(clL, lo)))) // 2+0
-	f_[3] = sub(f_[3], mul(bint(2), vectorMul(clL, ll)))                // 2+1
+	f_[3] = add(f_[3], mul(bint(2), vectorMul(clL, ll)))                // 2+1
 	f_[4] = sub(f_[4], mul(bint(2), vectorMul(clL, lr)))                // 2+2
-	f_[5] = sub(f_[5], mul(bint(2), vectorMul(clL, v_1)))               // 2+3 // TODO check dimension correspondence
+	f_[5] = add(f_[5], mul(bint(2), vectorMul(clL, v_1)))               // 2+3 // TODO check dimension correspondence
 
 	f_[0] = sub(f_[0], vectorMul(clR, ls))                              // 1-1
-	f_[1] = sub(f_[1], mul(bint(2), mul(ch_delta, vectorMul(clR, lo)))) // 1+0
+	f_[1] = add(f_[1], mul(bint(2), mul(ch_delta, vectorMul(clR, lo)))) // 1+0
 	f_[2] = sub(f_[2], mul(bint(2), vectorMul(clR, ll)))                // 1+1
-	f_[3] = sub(f_[3], mul(bint(2), vectorMul(clR, lr)))                // 1+2
+	f_[3] = add(f_[3], mul(bint(2), vectorMul(clR, lr)))                // 1+2
 	f_[4] = sub(f_[4], mul(bint(2), vectorMul(clR, v_1)))               // 1+3 // TODO check dimension correspondence
 
 	cl0 := vectorAdd(
@@ -570,58 +585,70 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 		vectorMulOnScalar(powvector(ch_lambda, public.Nv)[1:], bbool(public.Fl)),
 	) // TODO check dimension correspondence
 
-	f_[-1] = sub(f_[-1], vectorMul(cl0, ls))              // 0-1
+	f_[-1] = add(f_[-1], vectorMul(cl0, ls))              // 0-1
 	f_[0] = sub(f_[0], mul(ch_delta, vectorMul(cl0, lo))) // 0+0
-	f_[1] = sub(f_[1], vectorMul(cl0, ll))                // 0+1
+	f_[1] = add(f_[1], vectorMul(cl0, ll))                // 0+1
 	f_[2] = sub(f_[2], vectorMul(cl0, lr))                // 0+2
-	f_[3] = sub(f_[3], vectorMul(cl0, v_1))               // 0+3 // TODO check dimension correspondence
+	f_[3] = add(f_[3], vectorMul(cl0, v_1))               // 0+3 // TODO check dimension correspondence
 
 	// calc weight norm |n(t)|^2 for mu
 
 	// n(t) = pn(t) + n_(t) =
-	// t-1*ns + delta*no + t *nl + t2*nr + delta-1*T3*cnO + t2*cnl + t*cnr =
-	// t-1*ns + delta*no + t * (nl + cnR) + t2 * (nr + cnL) + delta-1*T3*cnO
+	// (t-1*ns - delta*no + t *nl - t2*nr) + (delta-1*T3*cnO - t2*cnl + t*cnr) =
+	// t-1*ns - delta*no + t * (nl + cnR) - t2 * (nr + cnL) + delta-1*T3*cnO
 
 	// -1: ns
-	// 0: delta*no
+	// 0: -delta*no
 	// 1: nl+cnR
-	// 2: nr+cnL
+	// 2: -nr-cnL
 	// 3: delta-1*cnO
 
 	f_[-2] = sub(f_[-2], weightVectorMul(ns, ns, ch_mu)) // -1-1
 
-	f_[-1] = sub(f_[-1], mul(weightVectorMul(ns, no, ch_mu), mul(bint(2), ch_delta)))     // -1+0
+	f_[-1] = add(f_[-1], mul(weightVectorMul(ns, no, ch_mu), mul(bint(2), ch_delta)))     // -1+0
 	f_[0] = sub(f_[0], mul(weightVectorMul(ns, vectorAdd(nl, cnR), ch_mu), bint(2)))      // -1+1
-	f_[1] = sub(f_[1], mul(weightVectorMul(ns, vectorAdd(nr, cnL), ch_mu), bint(2)))      // -1+2
+	f_[1] = add(f_[1], mul(weightVectorMul(ns, vectorAdd(nr, cnL), ch_mu), bint(2)))      // -1+2
 	f_[2] = sub(f_[2], mul(weightVectorMul(ns, cnO, ch_mu), mul(bint(2), inv(ch_delta)))) // -1+3
 
 	f_[0] = sub(f_[0], weightVectorMul(vectorMulOnScalar(no, ch_delta), vectorMulOnScalar(no, ch_delta), ch_mu)) // 0 + 0
-	f_[1] = sub(f_[1], mul(weightVectorMul(no, vectorAdd(nl, cnR), ch_mu), mul(bint(2), ch_delta)))              // 0+1
+	f_[1] = add(f_[1], mul(weightVectorMul(no, vectorAdd(nl, cnR), ch_mu), mul(bint(2), ch_delta)))              // 0+1
 	f_[2] = sub(f_[2], mul(weightVectorMul(no, vectorAdd(nr, cnL), ch_mu), mul(bint(2), ch_delta)))              // 0+2
-	f_[3] = sub(f_[3], mul(weightVectorMul(no, cnO, ch_mu), bint(2)))                                            // 0+3
+	f_[3] = add(f_[3], mul(weightVectorMul(no, cnO, ch_mu), bint(2)))                                            // 0+3
 
 	f_[2] = sub(f_[2], weightVectorMul(vectorAdd(nl, cnR), vectorAdd(nl, cnR), ch_mu))                    // 1 + 1
-	f_[3] = sub(f_[3], mul(weightVectorMul(vectorAdd(nl, cnR), vectorAdd(nr, cnL), ch_mu), bint(2)))      // 1+2
+	f_[3] = add(f_[3], mul(weightVectorMul(vectorAdd(nl, cnR), vectorAdd(nr, cnL), ch_mu), bint(2)))      // 1+2
 	f_[4] = sub(f_[4], mul(weightVectorMul(vectorAdd(nl, cnR), cnO, ch_mu), mul(bint(2), inv(ch_delta)))) // 1+3
 
 	f_[4] = sub(f_[4], weightVectorMul(vectorAdd(nr, cnL), vectorAdd(nr, cnL), ch_mu))                    // 2 + 2
-	f_[5] = sub(f_[5], mul(weightVectorMul(vectorAdd(nr, cnL), cnO, ch_mu), mul(bint(2), inv(ch_delta)))) // 2+3
+	f_[5] = add(f_[5], mul(weightVectorMul(vectorAdd(nr, cnL), cnO, ch_mu), mul(bint(2), inv(ch_delta)))) // 2+3
 
 	f_[6] = sub(f_[6], weightVectorMul(vectorMulOnScalar(cnO, inv(ch_delta)), vectorMulOnScalar(cnO, inv(ch_delta)), ch_mu)) // 3 + 3
 
 	fmt.Println("f'(T) =", f_)
 	fmt.Println("f'(T)[3] =", f_[3])
 
-	sr := []*big.Int{
-		mul(ch_beta, mul(ch_delta, ro[1])),
-		bint(0),
-		add(mul(inv(ch_beta), mul(ch_delta, ro[0])), rl[1]),
-		add(add(mul(ch_delta, ro[2]), mul(inv(ch_beta), rl[0])), rr[1]),
-		add(add(add(mul(ch_delta, ro[3]), rl[2]), rv[1]), mul(inv(ch_beta), rr[0])),
-		add(rl[4], rr[3]),
-		add(mul(ch_delta, ro[5]), rr[4]),
-		add(mul(ch_delta, ro[6]), rl[5]),
-	}
+	// TODO should be chosen later!!
+	t := values(1)[0]
+	tinv := inv(t)
+	t2 := mul(t, t)
+	t3 := mul(t2, t)
+
+	// TODO calc without T
+	sr := vectorMulOnScalar(ro, minus(mul(t, ch_delta)))
+	sr = vectorAdd(sr, vectorMulOnScalar(rl, t2))
+	sr = vectorSub(sr, vectorMulOnScalar(rr, t3))
+	sr = vectorAdd(sr, vectorMulOnScalar(rv, mul(t3, t)))
+
+	//sr := []*big.Int{
+	//	mul(ch_beta, mul(ch_delta, ro[1])),
+	//	bint(0),
+	//	add(mul(inv(ch_beta), mul(ch_delta, ro[0])), rl[1]),
+	//	add(add(mul(ch_delta, ro[2]), mul(inv(ch_beta), rl[0])), rr[1]),
+	//	add(add(add(mul(ch_delta, ro[3]), rl[2]), rv[0]), mul(inv(ch_beta), rr[0])),
+	//	add(rl[4], rr[3]),
+	//	add(mul(ch_delta, ro[5]), rr[4]),
+	//	add(mul(ch_delta, ro[6]), rl[5]),
+	//}
 
 	fcoef := []*big.Int{f_[-1], f_[-2], f_[0], f_[1], f_[2], f_[4], f_[5], f_[6]}
 
@@ -637,37 +664,33 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 	// Prover sends Cs to verifier
 
 	// Verifier selects random t and sends to Prover
-	t := values(1)[0]
+	// Chose t here
 
 	// Prover computes
 
-	tinv := inv(t)
-	t2 := mul(t, t)
-	t3 := mul(t2, t)
-
 	r0 := mul(rs[0], tinv)
-	r0 = add(r0, mul(ro[0], ch_delta))
+	r0 = sub(r0, mul(ro[0], ch_delta))
 	r0 = add(r0, mul(rl[0], t))
-	r0 = add(r0, mul(rr[0], t2))
+	r0 = sub(r0, mul(rr[0], t2))
 
 	lT := vectorMulOnScalar(append(rs[1:], ls...), tinv)
-	lT = vectorAdd(lT, vectorMulOnScalar(append(ro[1:], lo...), ch_delta))
+	lT = vectorSub(lT, vectorMulOnScalar(append(ro[1:], lo...), ch_delta))
 	lT = vectorAdd(lT, vectorMulOnScalar(append(rl[1:], ll...), t))
-	lT = vectorAdd(lT, vectorMulOnScalar(append(rr[1:], lr...), t2))
+	lT = vectorSub(lT, vectorMulOnScalar(append(rr[1:], lr...), t2))
 	lT = vectorAdd(lT, vectorMulOnScalar(append(rv, v_1...), t3))
 
 	pnT := vectorMulOnScalar(cnR, t)
-	pnT = vectorAdd(pnT, vectorMulOnScalar(cnL, t2))
+	pnT = vectorSub(pnT, vectorMulOnScalar(cnL, t2))
 	pnT = vectorAdd(pnT, vectorMulOnScalar(cnO, mul(inv(ch_delta), t3)))
 
 	psT := weightVectorMul(pnT, pnT, ch_mu)
-	psT = add(psT, mul(vectorMul(lambda, public.Al), t3))
-	psT = add(psT, mul(vectorMul(mu, public.Am), t3))
+	psT = add(psT, mul(bint(2), mul(vectorMul(lambda, public.Al), t3)))
+	psT = add(psT, mul(bint(2), mul(vectorMul(mu, public.Am), t3)))
 
 	n_T := vectorMulOnScalar(ns, tinv)
-	n_T = vectorAdd(n_T, vectorMulOnScalar(no, ch_delta))
+	n_T = vectorSub(n_T, vectorMulOnScalar(no, ch_delta))
 	n_T = vectorAdd(n_T, vectorMulOnScalar(nl, t))
-	n_T = vectorAdd(n_T, vectorMulOnScalar(nr, t2))
+	n_T = vectorSub(n_T, vectorMulOnScalar(nr, t2))
 
 	nT := vectorAdd(pnT, n_T)
 
@@ -687,21 +710,22 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 	} // 8
 
 	cl_T := vectorMulOnScalar(clO, mul(t3, inv(ch_delta)))
-	cl_T = vectorAdd(cl_T, vectorMulOnScalar(clL, t2))
+	cl_T = vectorSub(cl_T, vectorMulOnScalar(clL, t2))
 	cl_T = vectorAdd(cl_T, vectorMulOnScalar(clR, t))
 	cl_T = vectorMulOnScalar(cl_T, bint(2))
-	cl_T = vectorAdd(cl_T, clO)
+	cl_T = vectorSub(cl_T, cl0)
 
 	cT := append(cr_T[1:], cl_T...)
 
 	CT := new(bn256.G1).Add(PT, new(bn256.G1).ScalarMult(Cs, tinv))
-	CT.Add(CT, new(bn256.G1).ScalarMult(Co, ch_delta))
+	CT.Add(CT, new(bn256.G1).ScalarMult(Co, minus(ch_delta)))
 	CT.Add(CT, new(bn256.G1).ScalarMult(Cl, t))
-	CT.Add(CT, new(bn256.G1).ScalarMult(Cr, t2))
+	CT.Add(CT, new(bn256.G1).ScalarMult(Cr, minus(t2)))
 	CT.Add(CT, new(bn256.G1).ScalarMult(V_, t3))
 
 	vT := add(psT, mul(v_, t3))
 	vT = add(vT, r0)
+	fmt.Println(r0)
 
 	// Check that calculated commitment equals to v*G + <l,H> + <n,G>
 	{
@@ -715,9 +739,9 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 	// Check 45 eq from doc 510
 	{
 		CLeft := new(bn256.G1).ScalarMult(Cs, tinv)
-		CLeft.Add(CLeft, new(bn256.G1).ScalarMult(Co, ch_delta))
+		CLeft.Add(CLeft, new(bn256.G1).ScalarMult(Co, minus(ch_delta)))
 		CLeft.Add(CLeft, new(bn256.G1).ScalarMult(Cl, t))
-		CLeft.Add(CLeft, new(bn256.G1).ScalarMult(Cr, t2))
+		CLeft.Add(CLeft, new(bn256.G1).ScalarMult(Cr, minus(t2)))
 		CLeft.Add(CLeft, new(bn256.G1).ScalarMult(V_, t3))
 
 		CTRight := new(bn256.G1).ScalarMult(public.G, add(mul(v_, t3), r0))

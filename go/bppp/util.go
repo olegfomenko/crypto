@@ -61,6 +61,10 @@ func points(n int) []*bn256.G1 {
 	return res
 }
 
+func minus(x *big.Int) *big.Int {
+	return sub(bint(0), x)
+}
+
 func inv(x *big.Int) *big.Int {
 	return new(big.Int).ModInverse(x, bn256.Order)
 }
@@ -296,8 +300,8 @@ func matrixMulOnVector(a []*big.Int, m [][]*big.Int) []*big.Int {
 
 func diagInv(x *big.Int, n int) [][]*big.Int {
 	var res [][]*big.Int = make([][]*big.Int, n)
-	val := big.NewInt(1)
-	inv := new(big.Int).ModInverse(x, bn256.Order)
+	inv := inv(x)
+	val := new(big.Int).Set(inv)
 
 	for i := 0; i < n; i++ {
 		res[i] = make([]*big.Int, n)
