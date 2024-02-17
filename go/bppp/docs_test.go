@@ -119,7 +119,7 @@ func TestACProtocol(t *testing.T) {
 		K:    1,
 		G:    points(1)[0],
 		GVec: points(1),
-		HVec: points(7 + 2),
+		HVec: points(8 + 2),
 		Wm:   Wm,
 		Wl:   Wl,
 		Am:   zeros(1),
@@ -210,12 +210,10 @@ func CommitOL(public *ACPublic, wo, wl []*big.Int, f PartitionF) (ro []*big.Int,
 		}
 	}
 
-	Co = new(bn256.G1).ScalarMult(public.G, ro[0])
-	Co.Add(Co, vectorPointScalarMul(public.HVec, append(ro[1:], lo...)))
+	Co = vectorPointScalarMul(public.HVec, append(ro, lo...))
 	Co.Add(Co, vectorPointScalarMul(public.GVec, no))
 
-	Cl = new(bn256.G1).ScalarMult(public.G, rl[0])
-	Cl.Add(Cl, vectorPointScalarMul(public.HVec, append(rl[1:], ll...)))
+	Cl = vectorPointScalarMul(public.HVec, append(rl, ll...))
 	Cl.Add(Cl, vectorPointScalarMul(public.GVec, nl))
 
 	return
@@ -240,8 +238,7 @@ func CommitR(public *ACPublic, wo, wr []*big.Int, f PartitionF) (rr []*big.Int, 
 		}
 	}
 
-	Cr = new(bn256.G1).ScalarMult(public.G, rr[0])
-	Cr.Add(Cr, vectorPointScalarMul(public.HVec, append(rr[1:], lr...)))
+	Cr = vectorPointScalarMul(public.HVec, append(rr, lr...))
 	Cr.Add(Cr, vectorPointScalarMul(public.GVec, nr))
 	return
 }
@@ -657,8 +654,7 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 		sr,
 	)
 
-	Cs := new(bn256.G1).ScalarMult(public.G, rs[0])
-	Cs.Add(Cs, vectorPointScalarMul(public.HVec, append(rs[1:], ls...)))
+	Cs := vectorPointScalarMul(public.HVec, append(rs, ls...))
 	Cs.Add(Cs, vectorPointScalarMul(public.GVec, ns))
 
 	// Prover sends Cs to verifier
@@ -673,10 +669,10 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 	r0 = add(r0, mul(rl[0], t))
 	r0 = sub(r0, mul(rr[0], t2))
 
-	lT := vectorMulOnScalar(append(rs[1:], ls...), tinv)
-	lT = vectorSub(lT, vectorMulOnScalar(append(ro[1:], lo...), ch_delta))
-	lT = vectorAdd(lT, vectorMulOnScalar(append(rl[1:], ll...), t))
-	lT = vectorSub(lT, vectorMulOnScalar(append(rr[1:], lr...), t2))
+	lT := vectorMulOnScalar(append(rs, ls...), tinv)
+	lT = vectorSub(lT, vectorMulOnScalar(append(ro, lo...), ch_delta))
+	lT = vectorAdd(lT, vectorMulOnScalar(append(rl, ll...), t))
+	lT = vectorSub(lT, vectorMulOnScalar(append(rr, lr...), t2))
 	lT = vectorAdd(lT, vectorMulOnScalar(append(rv, v_1...), t3))
 
 	pnT := vectorMulOnScalar(cnR, t)
@@ -715,7 +711,7 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 	cl_T = vectorMulOnScalar(cl_T, bint(2))
 	cl_T = vectorSub(cl_T, cl0)
 
-	cT := append(cr_T[1:], cl_T...)
+	cT := append(cr_T, cl_T...)
 
 	CT := new(bn256.G1).Add(PT, new(bn256.G1).ScalarMult(Cs, tinv))
 	CT.Add(CT, new(bn256.G1).ScalarMult(Co, minus(ch_delta)))
@@ -724,8 +720,8 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 	CT.Add(CT, new(bn256.G1).ScalarMult(V_, t3))
 
 	vT := add(psT, mul(v_, t3))
-	vT = add(vT, r0)
-	fmt.Println(r0)
+	//vT = add(vT, r0)
+	//fmt.Println(r0)
 
 	// Check that calculated commitment equals to v*G + <l,H> + <n,G>
 	{
@@ -744,7 +740,7 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 		CLeft.Add(CLeft, new(bn256.G1).ScalarMult(Cr, minus(t2)))
 		CLeft.Add(CLeft, new(bn256.G1).ScalarMult(V_, t3))
 
-		CTRight := new(bn256.G1).ScalarMult(public.G, add(mul(v_, t3), r0))
+		CTRight := new(bn256.G1).ScalarMult(public.G, mul(v_, t3))
 		CTRight.Add(CTRight, vectorPointScalarMul(public.HVec, lT))
 		CTRight.Add(CTRight, vectorPointScalarMul(public.GVec, n_T))
 		fmt.Println("Check (45):", bytes.Equal(CLeft.Marshal(), CTRight.Marshal()))
