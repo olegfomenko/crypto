@@ -17,7 +17,7 @@ func values(n int) []*big.Int {
 			panic(err)
 		}
 
-		res[i] = bint(2) // TODO remove
+		//res[i] = bint(2) // TODO remove
 	}
 
 	return res
