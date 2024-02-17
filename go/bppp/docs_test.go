@@ -750,6 +750,28 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 		fmt.Println("Check (45):", bytes.Equal(CLeft.Marshal(), CTRight.Marshal()))
 	}
 
+	// Check Eq. 58
+	{
+
+		l_T := vectorMulOnScalar(ls, tinv)
+		l_T = vectorSub(l_T, vectorMulOnScalar(lo, ch_delta))
+		l_T = vectorAdd(l_T, vectorMulOnScalar(ll, t))
+		l_T = vectorSub(l_T, vectorMulOnScalar(lr, t2))
+		l_T = vectorAdd(l_T, vectorMulOnScalar(v_1, t3))
+
+		f_T := add(psT, mul(v_, t3))
+		f_T = sub(f_T, vectorMul(cl_T, l_T))
+		f_T = sub(f_T, weightVectorMul(nT, nT, ch_mu))
+
+		rT := vectorMulOnScalar(rs, tinv)
+		rT = vectorSub(rT, vectorMulOnScalar(ro, ch_delta))
+		rT = vectorAdd(rT, vectorMulOnScalar(rl, t))
+		rT = vectorSub(rT, vectorMulOnScalar(rr, t2))
+		rT = vectorAdd(rT, vectorMulOnScalar(rv, t3))
+
+		fmt.Println("f'(T) - g(T) =", sub(vectorMul(cr_T, rT), f_T))
+	}
+
 	fmt.Println("Should be WNLA secret: ", vT)
 	wnla(public.G, public.GVec, public.HVec, cT, CT, ch_ro, ch_mu, lT, nT)
 }
