@@ -119,7 +119,7 @@ func TestACProtocol(t *testing.T) {
 		K:    1,
 		G:    points(1)[0],
 		GVec: points(1),
-		HVec: points(8 + 2),
+		HVec: points(7 + 2),
 		Wm:   Wm,
 		Wl:   Wl,
 		Am:   zeros(1),
@@ -636,16 +636,20 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 	sr = vectorSub(sr, vectorMulOnScalar(rr, t3))
 	sr = vectorAdd(sr, vectorMulOnScalar(rv, mul(t3, t)))
 
-	//sr := []*big.Int{
-	//	mul(ch_beta, mul(ch_delta, ro[1])),
+	fmt.Println("sr =", sr)
+
+	//sr = []*big.Int{
+	//	minus(mul(ch_beta, mul(ch_delta, ro[1]))),
 	//	bint(0),
-	//	add(mul(inv(ch_beta), mul(ch_delta, ro[0])), rl[1]),
-	//	add(add(mul(ch_delta, ro[2]), mul(inv(ch_beta), rl[0])), rr[1]),
-	//	add(add(add(mul(ch_delta, ro[3]), rl[2]), rv[0]), mul(inv(ch_beta), rr[0])),
-	//	add(rl[4], rr[3]),
-	//	add(mul(ch_delta, ro[5]), rr[4]),
-	//	add(mul(ch_delta, ro[6]), rl[5]),
+	//	sub(rl[1], mul(inv(ch_beta), mul(ch_delta, ro[0]))),
+	//	sub(sub(mul(inv(ch_beta), rl[0]), mul(ch_delta, ro[2])), rr[1]),
+	//	sub(sub(rl[2], mul(ch_delta, ro[3])), mul(inv(ch_beta), rr[0])),
+	//	sub(rl[4], rr[3]),
+	//	sub(minus(rr[4]), mul(ch_delta, ro[5])),
+	//	sub(rl[5], mul(ch_delta, ro[6])),
 	//}
+	//
+	//fmt.Println("sr =", sr)
 
 	fcoef := []*big.Int{f_[-1], f_[-2], f_[0], f_[1], f_[2], f_[4], f_[5], f_[6]}
 
