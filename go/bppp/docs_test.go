@@ -430,8 +430,8 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 
 	lcomb := func(i int) *big.Int {
 		return add(
-			mul(bbool(public.Fl), pow(ch_lambda, mul(bint(public.Nv), bint(i)))),
-			mul(bbool(public.Fm), pow(ch_mu, add(mul(bint(public.Nv), bint(i)), bint(1)))),
+			mul(bbool(public.Fl), pow(ch_lambda, public.Nv*i)),
+			mul(bbool(public.Fm), pow(ch_mu, public.Nv*i+1)),
 		)
 	}
 
@@ -451,8 +451,8 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 
 	// Calculate lambda vector (nl == nv * k)
 	lambda := vectorAdd(
-		vectorTensorMul(vectorMulOnScalar(powvector(ch_lambda, public.Nv), ch_mu), powvector(pow(ch_mu, bint(public.Nv)), public.K)),
-		vectorTensorMul(powvector(ch_mu, public.Nv), powvector(pow(ch_lambda, bint(public.Nv)), public.K)),
+		vectorTensorMul(vectorMulOnScalar(powvector(ch_lambda, public.Nv), ch_mu), powvector(pow(ch_mu, public.Nv), public.K)),
+		vectorTensorMul(powvector(ch_mu, public.Nv), powvector(pow(ch_lambda, public.Nv), public.K)),
 	)
 
 	lambda = vectorMulOnScalar(lambda, bbool(public.Fl && public.Fm))
@@ -747,6 +747,20 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 		l_T = vectorAdd(l_T, vectorMulOnScalar(ll, t))
 		l_T = vectorSub(l_T, vectorMulOnScalar(lr, t2))
 		l_T = vectorAdd(l_T, vectorMulOnScalar(v_1, t3))
+
+		fmt.Println(ls)
+		fmt.Println(vectorMulOnScalar(ls, tinv))
+		fmt.Println(tinv)
+
+		lTPoly := make(map[int][]*big.Int)
+		lTPoly[-1] = ls
+		lTPoly[0] = vectorMulOnScalar(lo, minus(ch_delta))
+		lTPoly[1] = ll
+		lTPoly[2] = vectorMulOnScalar(lr, minus(bint(1)))
+		lTPoly[3] = v_1
+
+		fmt.Println("l'(T) =", l_T)
+		fmt.Println("l'(T) =", polyVectorCalc(lTPoly, t))
 
 		cmulPoly := make(map[int]*big.Int)
 

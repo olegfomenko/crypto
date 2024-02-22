@@ -6,6 +6,11 @@ import (
 	"testing"
 )
 
+func TestPow(t *testing.T) {
+	fmt.Println(pow(bint(2), -1))
+	fmt.Println(inv(bint(2)))
+}
+
 func TestTensorMul(t *testing.T) {
 	a := powvector(bint(10), 2)
 	b := powvector(bint(100), 3)

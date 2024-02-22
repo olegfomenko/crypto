@@ -95,12 +95,12 @@ func mul(x *big.Int, y *big.Int) *big.Int {
 	return new(big.Int).Mod(new(big.Int).Mul(x, y), bn256.Order)
 }
 
-func pow(x *big.Int, y *big.Int) *big.Int {
-	if y.Cmp(bint(0)) < 0 {
-		return new(big.Int).Exp(inv(x), y, bn256.Order)
+func pow(x *big.Int, y int) *big.Int {
+	if y < 0 {
+		return new(big.Int).Exp(inv(x), big.NewInt(-int64(y)), bn256.Order)
 	}
 
-	return new(big.Int).Exp(x, y, bn256.Order)
+	return new(big.Int).Exp(x, big.NewInt(int64(y)), bn256.Order)
 }
 
 func bint(v int) *big.Int {
@@ -399,7 +399,7 @@ func polyVectorMul(a, b map[int][]*big.Int) map[int]*big.Int { // res dimension 
 func polyCalc(poly map[int]*big.Int, x *big.Int) *big.Int {
 	res := bint(0)
 	for k, v := range poly {
-		res = add(res, mul(v, pow(x, bint(k))))
+		res = add(res, mul(v, pow(x, k)))
 	}
 	return res
 }
@@ -407,7 +407,7 @@ func polyCalc(poly map[int]*big.Int, x *big.Int) *big.Int {
 func polyVectorCalc(poly map[int][]*big.Int, x *big.Int) []*big.Int {
 	var res []*big.Int
 	for k, v := range poly {
-		res = vectorAdd(res, vectorMulOnScalar(v, pow(x, bint(k))))
+		res = vectorAdd(res, vectorMulOnScalar(v, pow(x, k)))
 	}
 	return res
 }
