@@ -602,50 +602,50 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 	fmt.Println("f'(T)[3] =", f_[3])
 
 	//TODO should be chosen later!!
-	t := values(1)[0]
-	tinv := inv(t)
-	t2 := mul(t, t)
-	t3 := mul(t2, t)
+	//t := values(1)[0]
+	//tinv := inv(t)
+	//t2 := mul(t, t)
+	//t3 := mul(t2, t)
 
-	//TODO calc without T
-	sr := vectorMulOnScalar(ro, minus(mul(t, ch_delta)))
-	sr = vectorAdd(sr, vectorMulOnScalar(rl, t2))
-	sr = vectorSub(sr, vectorMulOnScalar(rr, t3))
-	sr = vectorAdd(sr, vectorMulOnScalar(rv, mul(t3, t)))
-	fmt.Println("sr =", sr)
-
-	//sr = []*big.Int{
-	//	minus(mul(ch_beta, mul(ch_delta, ro[1]))),
-	//	bint(0),
-	//	sub(rl[1], mul(inv(ch_beta), mul(ch_delta, ro[0]))),
-	//	sub(sub(mul(inv(ch_beta), rl[0]), mul(ch_delta, ro[2])), rr[1]),
-	//	sub(sub(sub(rl[2], mul(ch_delta, ro[3])), mul(inv(ch_beta), rr[0])), mul(inv(ch_beta), rv[1])),
-	//	sub(rl[4], rr[3]),
-	//	sub(minus(rr[4]), mul(ch_delta, ro[5])),
-	//	sub(rl[5], mul(ch_delta, ro[6])),
-	//}
-
+	////TODO calc without T
+	//sr := vectorMulOnScalar(ro, minus(mul(t, ch_delta)))
+	//sr = vectorAdd(sr, vectorMulOnScalar(rl, t2))
+	//sr = vectorSub(sr, vectorMulOnScalar(rr, t3))
+	//sr = vectorAdd(sr, vectorMulOnScalar(rv, mul(t3, t)))
 	//fmt.Println("sr =", sr)
+	//
+	////sr = []*big.Int{
+	////	minus(mul(ch_beta, mul(ch_delta, ro[1]))),
+	////	bint(0),
+	////	sub(rl[1], mul(inv(ch_beta), mul(ch_delta, ro[0]))),
+	////	sub(sub(mul(inv(ch_beta), rl[0]), mul(ch_delta, ro[2])), rr[1]),
+	////	sub(sub(sub(rl[2], mul(ch_delta, ro[3])), mul(inv(ch_beta), rr[0])), mul(inv(ch_beta), rv[1])),
+	////	sub(rl[4], rr[3]),
+	////	sub(minus(rr[4]), mul(ch_delta, ro[5])),
+	////	sub(rl[5], mul(ch_delta, ro[6])),
+	////}
+	//
+	////fmt.Println("sr =", sr)
+	//
+	//fcoef := []*big.Int{f_[-1], f_[-2], f_[0], f_[1], f_[2], f_[4], f_[5], f_[6]}
+	//
+	//rs := vectorSub( // 8
+	//	append([]*big.Int{fcoef[0]}, vectorMulOnScalar(fcoef[1:], inv(ch_beta))...),
+	//	sr,
+	//)
 
-	fcoef := []*big.Int{f_[-1], f_[-2], f_[0], f_[1], f_[2], f_[4], f_[5], f_[6]}
+	ch_beta_inv := inv(ch_beta)
 
-	rs := vectorSub( // 8
-		append([]*big.Int{fcoef[0]}, vectorMulOnScalar(fcoef[1:], inv(ch_beta))...),
-		sr,
-	)
-
-	//ch_beta_inv := inv(ch_beta)
-
-	//rs := []*big.Int{
-	//	add(f_[-1], mul(ch_beta, mul(ch_delta, ro[1]))),
-	//	mul(f_[-2], ch_beta_inv),
-	//	mul(sub(add(f_[0], mul(ch_delta, ro[0])), mul(ch_beta, rl[1])), ch_beta_inv),
-	//	add(mul(sub(f_[1], rl[0]), ch_beta_inv), add(rr[1], mul(ch_delta, ro[2]))),
-	//	add(mul(sub(add(f_[2], rr[0]), rv[1]), ch_beta_inv), sub(mul(ch_delta, ro[3]), rl[2])),
-	//	add(mul(f_[4], ch_beta_inv), sub(rr[3], rl[4])),
-	//	add(mul(f_[5], ch_beta_inv), add(rr[4], mul(ch_delta, ro[5]))),
-	//	add(mul(f_[6], ch_beta_inv), sub(mul(ch_delta, ro[6]), rl[5])),
-	//}
+	rs := []*big.Int{
+		add(f_[-1], mul(ch_beta, mul(ch_delta, ro[1]))),
+		mul(f_[-2], ch_beta_inv),
+		mul(sub(add(f_[0], mul(ch_delta, ro[0])), mul(ch_beta, rl[1])), ch_beta_inv),
+		add(mul(sub(f_[1], rl[0]), ch_beta_inv), add(rr[1], mul(ch_delta, ro[2]))),
+		add(mul(add(f_[2], rr[0]), ch_beta_inv), sub(mul(ch_delta, ro[3]), rl[2])),
+		add(mul(f_[4], ch_beta_inv), sub(rr[3], rl[4])),
+		add(mul(f_[5], ch_beta_inv), add(rr[4], mul(ch_delta, ro[5]))),
+		add(mul(f_[6], ch_beta_inv), sub(mul(ch_delta, ro[6]), rl[5])),
+	}
 
 	fmt.Println("rs =", rs)
 
@@ -656,10 +656,10 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 
 	// Verifier selects random t and sends to Prover
 	// Uncomment after fixing rs/sr
-	//t := values(1)[0]
-	//tinv := inv(t)
-	//t2 := mul(t, t)
-	//t3 := mul(t2, t)
+	t := values(1)[0]
+	tinv := inv(t)
+	t2 := mul(t, t)
+	t3 := mul(t2, t)
 
 	// Check rs calculated correctly
 	//{
@@ -698,6 +698,9 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 	psT := weightVectorMul(pnT, pnT, ch_mu)
 	psT = add(psT, mul(bint(2), mul(vectorMul(lambda, public.Al), t3)))
 	psT = sub(psT, mul(bint(2), mul(vectorMul(mu, public.Am), t3)))
+
+	// TODO experimental
+	psT = add(psT, mul(t3, rv[0]))
 
 	{
 		psTPoly := make(map[int]*big.Int)
