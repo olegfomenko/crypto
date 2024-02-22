@@ -17,7 +17,7 @@ func values(n int) []*big.Int {
 			panic(err)
 		}
 
-		//res[i] = bint(2) // TODO remove
+		res[i] = bint(2) // TODO remove
 	}
 
 	return res
@@ -92,11 +92,14 @@ func mul(x *big.Int, y *big.Int) *big.Int {
 	if x == nil || y == nil {
 		return bint(0)
 	}
-
 	return new(big.Int).Mod(new(big.Int).Mul(x, y), bn256.Order)
 }
 
 func pow(x *big.Int, y *big.Int) *big.Int {
+	if y.Cmp(bint(0)) < 0 {
+		return new(big.Int).Exp(inv(x), y, bn256.Order)
+	}
+
 	return new(big.Int).Exp(x, y, bn256.Order)
 }
 
