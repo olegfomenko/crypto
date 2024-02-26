@@ -14,7 +14,7 @@ type ACPublic struct {
 	K                  int
 	G                  *bn256.G1
 	GVec               []*bn256.G1 // Nm
-	HVec               []*bn256.G1 // Nv+7
+	HVec               []*bn256.G1 // Nv+9
 
 	Wm [][]*big.Int // Nm * Nw
 	Wl [][]*big.Int // Nl * Nw
@@ -119,7 +119,7 @@ func TestACProtocol(t *testing.T) {
 		K:    1,
 		G:    points(1)[0],
 		GVec: points(1),
-		HVec: points(8 + 2),
+		HVec: points(9 + 2),
 		Wm:   Wm,
 		Wl:   Wl,
 		Am:   zeros(1),
@@ -167,18 +167,18 @@ func ArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate) {
 func Com(v []*big.Int, s *big.Int, G *bn256.G1, H []*bn256.G1) *bn256.G1 {
 	res := new(bn256.G1).ScalarMult(G, v[0])
 	res.Add(res, new(bn256.G1).ScalarMult(H[0], s))
-	res.Add(res, vectorPointScalarMul(H[8:], v[1:]))
+	res.Add(res, vectorPointScalarMul(H[9:], v[1:]))
 	return res
 }
 
 // Creates commits Co and Cl, also map input witness using f partition func
 func CommitOL(public *ACPublic, wo, wl []*big.Int, f PartitionF) (ro []*big.Int, rl []*big.Int, no []*big.Int, nl []*big.Int, lo []*big.Int, ll []*big.Int, Co *bn256.G1, Cl *bn256.G1) {
-	ro_ := values(6)
-	rl_ := values(5)
+	ro_ := values(7)
+	rl_ := values(6)
 
 	// contains random values, except several positions (described in 5.2.4)
-	ro = []*big.Int{ro_[0], ro_[1], ro_[2], ro_[3], big.NewInt(0), ro_[4], ro_[5], big.NewInt(0)}        // 8
-	rl = []*big.Int{rl_[0], rl_[1], rl_[2], big.NewInt(0), rl_[3], rl_[4], big.NewInt(0), big.NewInt(0)} // 8
+	ro = []*big.Int{ro_[0], ro_[1], ro_[2], ro_[3], big.NewInt(0), ro_[4], ro_[5], ro_[6], bint(0)}  // 9
+	rl = []*big.Int{rl_[0], rl_[1], rl_[2], big.NewInt(0), rl_[3], rl_[4], rl_[5], bint(0), bint(0)} // 9
 
 	// nl == wl and nr == wr (described in 5.2.1)
 	nl = wl // Nm
@@ -220,10 +220,10 @@ func CommitOL(public *ACPublic, wo, wl []*big.Int, f PartitionF) (ro []*big.Int,
 }
 
 func CommitR(public *ACPublic, wo, wr []*big.Int, f PartitionF) (rr []*big.Int, nr []*big.Int, lr []*big.Int, Cr *bn256.G1) {
-	rr_ := values(4) // 4
+	rr_ := values(5) // 4
 
 	// contains random values, except several positions (described in 5.2.4)
-	rr = []*big.Int{rr_[0], rr_[1], big.NewInt(0), rr_[2], rr_[3], big.NewInt(0), big.NewInt(0), big.NewInt(0)} // 8
+	rr = []*big.Int{rr_[0], rr_[1], big.NewInt(0), rr_[2], rr_[3], rr_[4], big.NewInt(0), big.NewInt(0), bint(0)} // 9
 
 	// nl == wl and nr == wr (described in 5.2.1)
 	nr = wr
@@ -503,7 +503,7 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 		return mul(v_, bint(2))
 	}()
 
-	rv := zeros(8)            // 8
+	rv := zeros(9)            // 9
 	rv[0] = func() *big.Int { // TODO maybe 0 instead of 1
 		rv1 := bint(0)
 
@@ -642,9 +642,12 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 		mul(sub(add(f_[0], mul(ch_delta, ro[0])), mul(ch_beta, rl[1])), ch_beta_inv),
 		add(mul(sub(f_[1], rl[0]), ch_beta_inv), add(rr[1], mul(ch_delta, ro[2]))),
 		add(mul(add(f_[2], rr[0]), ch_beta_inv), sub(mul(ch_delta, ro[3]), rl[2])),
-		add(mul(f_[4], ch_beta_inv), sub(rr[3], rl[4])),
-		add(mul(f_[5], ch_beta_inv), add(rr[4], mul(ch_delta, ro[5]))),
-		add(mul(f_[6], ch_beta_inv), sub(mul(ch_delta, ro[6]), rl[5])),
+
+		minus(mul(rv[0], ch_beta_inv)),
+
+		add(mul(f_[4], ch_beta_inv), add(mul(ch_delta, ro[5]), sub(rr[3], rl[4]))),
+		add(mul(f_[5], ch_beta_inv), sub(add(rr[4], mul(ch_delta, ro[6])), rl[5])),
+		add(mul(f_[6], ch_beta_inv), add(sub(mul(ch_delta, ro[7]), rl[6]), rr[5])),
 	}
 
 	fmt.Println("rs =", rs)
@@ -700,7 +703,7 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 	psT = sub(psT, mul(bint(2), mul(vectorMul(mu, public.Am), t3)))
 
 	// TODO experimental
-	psT = add(psT, mul(t3, rv[0]))
+	//psT = add(psT, mul(t3, rv[0]))
 
 	{
 		psTPoly := make(map[int]*big.Int)
@@ -733,10 +736,11 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 		mul(ch_beta, t),
 		mul(ch_beta, t2),
 		mul(ch_beta, t3),
+		mul(ch_beta, mul(t, t3)),
 		mul(ch_beta, mul(t2, t3)),
 		mul(ch_beta, mul(t3, t3)),
 		mul(ch_beta, mul(mul(t3, t), t3)),
-	} // 8
+	} // 9
 
 	cl_T := vectorMulOnScalar(clO, mul(t3, inv(ch_delta)))
 	cl_T = vectorSub(cl_T, vectorMulOnScalar(clL, t2))
@@ -877,6 +881,13 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 		fmt.Println("f'(T) - g(T) =", sub(f_T, vectorMul(cr_T, rT)))
 	}
 
+	// l vector length currently equals to 9. Increase to the nearest 2^i
+	for len(lT) < 16 {
+		lT = append(lT, bint(0))
+		cT = append(cT, bint(0))
+		public.HVec = append(public.HVec, new(bn256.G1).ScalarBaseMult(bint(0)))
+	}
+
 	fmt.Println("Should be WNLA secret: ", vT)
 	wnla(public.G, public.GVec, public.HVec, cT, CT, ch_ro, ch_mu, lT, nT)
 }
@@ -886,18 +897,18 @@ func TestWNLA(t *testing.T) {
 	const N = 4
 
 	g := points(1)[0]
-	G := points(N)
+	G := points(4)
 
-	H := points(N)
+	H := points(8)
 
-	c := values(N)
+	c := values(8)
 
 	ro := values(1)[0]
 	mu := mul(ro, ro)
 
 	// Private
-	l := []*big.Int{big.NewInt(4), big.NewInt(5), big.NewInt(10), big.NewInt(1)}
-	n := []*big.Int{big.NewInt(2), big.NewInt(1), big.NewInt(2), big.NewInt(10)}
+	l := []*big.Int{bint(4), bint(5), bint(10), bint(1), bint(99), bint(35), bint(1), bint(15)}
+	n := []*big.Int{bint(1), bint(3), bint(42), bint(14)}
 
 	// Com
 	v := add(vectorMul(c, l), weightVectorMul(n, n, mu))

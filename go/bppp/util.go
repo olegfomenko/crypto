@@ -2,6 +2,7 @@ package bppp
 
 import (
 	"crypto/rand"
+	"github.com/ethereum/go-ethereum/crypto"
 	"math/big"
 
 	"github.com/cloudflare/bn256"
@@ -172,6 +173,10 @@ func vectorPointScalarMul(g []*bn256.G1, a []*big.Int) *bn256.G1 {
 		a = append(a, bint(0))
 	}
 
+	if len(g) < len(a) {
+		//panic("invalid")
+	}
+
 	res := new(bn256.G1).ScalarMult(g[0], a[0])
 	for i := 1; i < len(g); i++ {
 		res.Add(res, new(bn256.G1).ScalarMult(g[i], a[i]))
@@ -214,6 +219,7 @@ func vectorPointMulOnScalar(g []*bn256.G1, a *big.Int) []*bn256.G1 {
 	for i := range res {
 		res[i] = new(bn256.G1).ScalarMult(g[i], a)
 	}
+	crypto.Keccak256()
 	return res
 }
 
