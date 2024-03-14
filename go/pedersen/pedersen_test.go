@@ -7,6 +7,7 @@ package pedersen
 import (
 	"crypto/rand"
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"math/big"
 	"strconv"
 	"testing"
@@ -26,7 +27,7 @@ func TestBitRepresentation(t *testing.T) {
 }
 
 func TestPedersenCommitment(t *testing.T) {
-	proof, commitment, prv, err := CreatePedersenCommitment(10, 5)
+	proof, commitment, prv, err := CreatePedersenCommitment(10, 64)
 	if err != nil {
 		panic(err)
 	}
@@ -36,6 +37,8 @@ func TestPedersenCommitment(t *testing.T) {
 	fmt.Println("Response commitment: " + commitment.String())
 
 	fmt.Println("Private Key: " + hexutil.Encode(prv.Bytes()))
+
+	spew.Dump(proof)
 
 	if err = VerifyPedersenCommitment(commitment, proof); err != nil {
 		panic(err)

@@ -6,6 +6,7 @@ package bp
 
 import (
 	"crypto/rand"
+	"github.com/davecgh/go-spew/spew"
 	"math/big"
 	"testing"
 
@@ -13,7 +14,7 @@ import (
 )
 
 func TestBulletProof(t *testing.T) {
-	const n = 4
+	const n = 64
 	public := NewBulletProofPublic(n)
 
 	prv, err := rand.Int(rand.Reader, bn256.Order)
@@ -26,6 +27,8 @@ func TestBulletProof(t *testing.T) {
 		panic(err)
 	}
 
+	spew.Dump(proof)
+
 	err = public.Verify(proof)
 	if err != nil {
 		panic(err)
@@ -33,7 +36,7 @@ func TestBulletProof(t *testing.T) {
 }
 
 func TestInnerProduct(t *testing.T) {
-	const n = 4
+	const n = 8
 	public := NewInnerArgumentPublic(n)
 
 	a := []*big.Int{big.NewInt(4), big.NewInt(5), big.NewInt(10), big.NewInt(1)}

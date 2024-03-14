@@ -24,6 +24,17 @@ func values(n int) []*big.Int {
 	return res
 }
 
+func zeroMatrix(n, m int) [][]*big.Int {
+	res := make([][]*big.Int, n)
+	for i := range res {
+		res[i] = make([]*big.Int, m)
+		for j := range res[i] {
+			res[i][j] = bint(0)
+		}
+	}
+	return res
+}
+
 func ones(n int) []*big.Int {
 	res := make([]*big.Int, n)
 	for i := range res {
@@ -478,6 +489,15 @@ func polyVectorMulWeight2(a, b map[int][]*big.Int, mu *big.Int) map[int]*big.Int
 	for i := 0; i < len(polyA); i++ {
 		res = polyAdd(res, polyMulOnScalar(polyMul(polyA[i], polyB[i]), exp))
 		exp = mul(exp, mu)
+	}
+
+	return res
+}
+
+func hadamardMul(a, b []*big.Int) []*big.Int {
+	res := make([]*big.Int, len(a))
+	for i := range res {
+		res[i] = mul(a[i], b[i])
 	}
 
 	return res

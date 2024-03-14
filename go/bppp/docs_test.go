@@ -52,8 +52,8 @@ func TestACProtocol(t *testing.T) {
 
 	// Challenge x = 10
 
-	// Wv = [-10, -100] = [-z, -z^2]
-	Wv := []*big.Int{bint(-10), bint(-100)}
+	// Wv = [10, 100] = [z, z^2]
+	Wv := []*big.Int{bint(10), bint(100)}
 
 	v := []*big.Int{p, q}
 
@@ -63,17 +63,16 @@ func TestACProtocol(t *testing.T) {
 	// if M such that -M(Wv*v) = v then al = -M*c
 
 	// Corresponding matrix M such that -M(Wv*v) = v
-	m := []*big.Int{frac(3, 530), frac(5, 530)}
+	m := vectorMulOnScalar([]*big.Int{bint(-3), bint(-5)}, inv(bint(30+500)))
 
 	fmt.Println("Check -M(Wv*v) =", vectorMulOnScalar(vectorMulOnScalar(m, bint(-1)), vectorMul(Wv, v)))
 
 	al := vectorMulOnScalar(m, bint(-15*1000)) // -m * c = -m * (r * z^3)
 
 	// Wlw = M(Wl*al + Wr*ar + Wo*ao)
-	// Wl*al + Wr*ar + Wo*ao = -30 - 500 + 15000 = 14470
-	// M(Wl*al + Wr*ar + Wo*ao) = [1447/101, 14470/101]
+	// Wl*al + Wr*ar + Wo*ao = 30 + 500 + 15000 = 15530
 
-	Wlw := vectorMulOnScalar(m, bint(14470)) // 2
+	Wlw := vectorMulOnScalar(m, bint(15530)) // 2
 
 	fmt.Println("Wl*w =", Wlw)
 
@@ -146,6 +145,354 @@ func TestACProtocol(t *testing.T) {
 	ArithmeticCircuitProtocol(&public, &private)
 }
 
+func TestArithmeticCircuit2(t *testing.T) {
+	// Test the knowledge of x, y for public z, r, such:
+	// x + y = r
+	// x * y = z
+
+	x := bint(3)
+	y := bint(5)
+
+	r := bint(8)
+	z := bint(15)
+
+	wl := []*big.Int{x}
+	wr := []*big.Int{y}
+	wo := []*big.Int{z, r}
+
+	wv := []*big.Int{x, y}
+	w := []*big.Int{x, y, z, r} // w = wl||wr||wo
+
+	Nm := 1
+	No := 2
+	Nv := 2
+	K := 1
+
+	Nl := Nv * K       // 2
+	Nw := Nm + Nm + No // 4
+
+	Wm := [][]*big.Int{{bint(0), bint(0), bint(1), bint(0)}} // Nm*Nw
+	Am := []*big.Int{bint(0)}                                // Nm
+
+	Wl := [][]*big.Int{
+		{bint(0), bint(1), bint(0), bint(0)},
+		{bint(1), bint(0), bint(0), bint(-1)},
+	} // Nl*Nw
+
+	Al := []*big.Int{minus(r), bint(0)} // Nl
+
+	fmt.Println("Circuit check:", vectorMul(Wm[0], w), "=", vectorMul(wl, wr))
+	fmt.Println("Circuit check:", vectorAdd(vectorAdd([]*big.Int{vectorMul(Wl[0], w), vectorMul(Wl[1], w)}, wv), Al), "= 0")
+
+	fmt.Println("Wl*w=", matrixMulOnVector(w, Wl))
+
+	public := &ACPublic{
+		Nm: Nm,
+		Nl: Nl,
+		Nv: Nv,
+		Nw: Nw,
+		No: No,
+		K:  K,
+
+		G:    points(1)[0],
+		GVec: points(Nm),
+		HVec: points(9 + Nv),
+
+		Wm: Wm,
+		Wl: Wl,
+		Am: Am,
+		Al: Al,
+		Fl: true,
+		Fm: false,
+	}
+
+	private := &AcPrivate{
+		v:  [][]*big.Int{wv},
+		sv: values(1),
+		wl: wl,
+		wr: wr,
+		wo: wo,
+		f: func(typ int, index int) *int {
+			if typ == 2 { // map all to no
+				return &index
+			}
+
+			return nil
+		},
+	}
+
+	ArithmeticCircuitProtocol(public, private)
+}
+
+func TestAC3(t *testing.T) {
+	// 0x0450f4ba
+	d := []*big.Int{bint(0), bint(4), bint(5), bint(0), bint(15), bint(4), bint(11), bint(10)}
+
+	// Public poles multiplicities i-th element corresponds to the 'i-digit' multiplicity
+	m := []*big.Int{
+		bint(2), // 0
+		bint(0), // 1
+		bint(0), // 2
+		bint(0), // 3
+		bint(2), // 4
+		bint(1), // 5
+		bint(0), // 6
+		bint(0), // 7
+		bint(0), // 8
+		bint(0), // 9
+		bint(1), // 10
+		bint(1), // 11
+		bint(0), // 12
+		bint(0), // 13
+		bint(0), // 14
+		bint(1), // 15
+	}
+
+	Nd := 8  // digits size
+	Np := 16 // base size
+
+	sv := values(1)[0]
+
+	Nm := Nd
+	No := Np
+
+	Nv := Nd + Nd + Np
+	Nl := Nv
+	Nw := Nd + Nd + Np
+
+	e := values(1)[0]
+
+	dpluse := make([]*big.Int, Nd)
+	for j := range dpluse {
+		dpluse[j] = add(d[j], e)
+	}
+
+	r := make([]*big.Int, Nd)
+	for j := range r {
+		r[j] = inv(dpluse[j])
+	}
+
+	v_ := append(d, r...)
+	v_ = append(v_, m...)
+
+	wL := d
+	wR := r
+	wO := m
+
+	am := ones(Nm)
+	Wm := zeroMatrix(Nm, Nw)
+
+	for i := 0; i < Nm; i++ {
+		Wm[i][i+Nm] = minus(e)
+	}
+
+	al := zeros(Nl)
+	Wl := zeroMatrix(Nl, Nw)
+
+	for i := 0; i < Nm; i++ {
+		Wl[i][i] = bint(-1)
+	}
+
+	for i := 0; i < Nm; i++ {
+		for j := 0; j < Nm; j++ {
+			Wl[i+Nm][j+Nm] = bint(1)
+		}
+	}
+
+	for i := 0; i < Nm; i++ {
+		Wl[i+Nm][i+Nm] = bint(0)
+	}
+
+	for i := 0; i < Nm; i++ {
+		for j := 0; j < No; j++ {
+			Wl[i+Nm][j+2*Nm] = minus(inv(add(e, bint(j))))
+		}
+	}
+
+	for i := 0; i < No; i++ {
+		Wl[i+2*Nm][i+2*Nm] = bint(-1)
+	}
+
+	w := append(wL, wR...)
+	w = append(w, wO...)
+
+	checkM := true
+	for i := 0; i < Nm; i++ {
+		checkM = checkM && (vectorAdd(am, matrixMulOnVector(w, Wm))[i].Cmp(hadamardMul(wL, wR)[i]) == 0)
+	}
+	fmt.Println("Circuit check:", checkM, vectorAdd(am, matrixMulOnVector(w, Wm)), "=", hadamardMul(wL, wR))
+	fmt.Println("Circuit check:", vectorAdd(vectorAdd(matrixMulOnVector(w, Wl), v_), al), "= 0")
+
+	fmt.Println("Wl*w =", matrixMulOnVector(w, Wl))
+	fmt.Println("Wm*w =", matrixMulOnVector(w, Wm))
+
+	public := &ACPublic{
+		Nm: Nm,
+		Nl: Nl,
+		Nv: Nv,
+		Nw: Nw,
+		No: No,
+		K:  1,
+
+		G:    points(1)[0],
+		GVec: points(Nm),
+		HVec: points(9 + Nv),
+
+		Wm: Wm,
+		Wl: Wl,
+		Am: am,
+		Al: al,
+		Fl: true,
+		Fm: false,
+	}
+
+	private := &AcPrivate{
+		v:  [][]*big.Int{v_},
+		sv: []*big.Int{sv},
+		wl: wL,
+		wr: wR,
+		wo: wO,
+		f: func(typ int, index int) *int {
+			if typ == 2 && index < No { // map all to no
+				return &index
+			}
+
+			return nil
+		},
+	}
+
+	ArithmeticCircuitProtocol(public, private)
+	//Wl*w = [0 65000549695646603732796438742359905742570406053903786389881062969044166799965 65000549695646603732796438742359905742570406053903786389881062969044166799964 0 65000549695646603732796438742359905742570406053903786389881062969044166799954 65000549695646603732796438742359905742570406053903786389881062969044166799965 65000549695646603732796438742359905742570406053903786389881062969044166799958 65000549695646603732796438742359905742570406053903786389881062969044166799959 32500274847823301866398219371179952871285203026951893194940531484522083399984 10833424949274433955466073123726650957095067675650631064980177161507361133328 55714756881982803199539804636308490636488919474774674048469482544895000114259 32500274847823301866398219371179952871285203026951893194940531484522083399984 22941370480816448376281096026715260850318966842554277549369786930250882399989 10833424949274433955466073123726650957095067675650631064980177161507361133328 60000507411366095753350558839101451454680374818988110513736365817579230892279 5416712474637216977733036561863325478547533837825315532490088580753680566664 65000549695646603732796438742359905742570406053903786389881062969044166799967 0 0 0 65000549695646603732796438742359905742570406053903786389881062969044166799967 65000549695646603732796438742359905742570406053903786389881062969044166799968 0 0 0 0 65000549695646603732796438742359905742570406053903786389881062969044166799968 65000549695646603732796438742359905742570406053903786389881062969044166799968 0 0 0 65000549695646603732796438742359905742570406053903786389881062969044166799968]
+	//Wl*w = [0 65000549695646603732796438742359905742570406053903786389881062969044166799965 65000549695646603732796438742359905742570406053903786389881062969044166799964 0 65000549695646603732796438742359905742570406053903786389881062969044166799954 65000549695646603732796438742359905742570406053903786389881062969044166799965 65000549695646603732796438742359905742570406053903786389881062969044166799958 65000549695646603732796438742359905742570406053903786389881062969044166799959 9142234176650144491829966685859820830308733581487975989225353124982456341021 52475933973747880313694259180766424658689004284090500249146061771011900874334 32356716210809645824971551950988358595512450029310756842754304185355373055296 9142234176650144491829966685859820830308733581487975989225353124982456341021 64583879505289894734509282083755034551912903450994146733535671539755422140995 52475933973747880313694259180766424658689004284090500249146061771011900874334 36642466740192938378782306153781319413703905373524193308021187458039603833316 47059221499110663335961222618903099180141470446265184716655973190258220307670 65000549695646603732796438742359905742570406053903786389881062969044166799967 0 0 0 65000549695646603732796438742359905742570406053903786389881062969044166799967 65000549695646603732796438742359905742570406053903786389881062969044166799968 0 0 0 0 0 0 0 0 0 0]
+}
+
+func TestAC4(t *testing.T) {
+	d := []*big.Int{bint(1)}
+
+	// Public poles multiplicities i-th element corresponds to the 'i-digit' multiplicity
+	m := []*big.Int{
+		bint(0), // 0
+		bint(1), // 1
+	}
+
+	Nd := 1 // digits size
+	Np := 2 // base size
+
+	sv := values(1)[0]
+
+	Nm := Nd
+	No := Np
+
+	Nv := Nd + Nd + Np
+	Nl := Nv
+	Nw := Nd + Nd + Np
+
+	e := values(1)[0]
+
+	dpluse := make([]*big.Int, Nd)
+	for j := range dpluse {
+		dpluse[j] = add(d[j], e)
+	}
+
+	r := make([]*big.Int, Nd)
+	for j := range r {
+		r[j] = inv(dpluse[j])
+	}
+
+	v_ := append(d, r...)
+	v_ = append(v_, m...)
+
+	wL := d
+	wR := r
+	wO := m
+
+	am := ones(Nm)
+	Wm := zeroMatrix(Nm, Nw)
+
+	for i := 0; i < Nm; i++ {
+		Wm[i][i+Nm] = minus(e)
+	}
+
+	al := zeros(Nl)
+	Wl := zeroMatrix(Nl, Nw)
+
+	for i := 0; i < Nm; i++ {
+		Wl[i][i] = bint(-1)
+	}
+
+	for i := 0; i < Nm; i++ {
+		for j := 0; j < Nm; j++ {
+			Wl[i+Nm][j+Nm] = bint(1)
+		}
+	}
+
+	for i := 0; i < Nm; i++ {
+		Wl[i+Nm][i+Nm] = bint(0)
+	}
+
+	for i := 0; i < Nm; i++ {
+		for j := 0; j < No; j++ {
+			Wl[i+Nm][j+2*Nm] = minus(inv(add(e, bint(j))))
+		}
+	}
+
+	for i := 0; i < No; i++ {
+		Wl[i+2*Nm][i+2*Nm] = bint(-1)
+	}
+
+	w := append(wL, wR...)
+	w = append(w, wO...)
+
+	checkM := true
+	for i := 0; i < Nm; i++ {
+		checkM = checkM && (vectorAdd(am, matrixMulOnVector(w, Wm))[i].Cmp(hadamardMul(wL, wR)[i]) == 0)
+	}
+	fmt.Println("Circuit check:", checkM, vectorAdd(am, matrixMulOnVector(w, Wm)), "=", hadamardMul(wL, wR))
+	fmt.Println("Circuit check:", vectorAdd(vectorAdd(matrixMulOnVector(w, Wl), v_), al), "= 0")
+
+	fmt.Println("Wl*w =", matrixMulOnVector(w, Wl))
+	fmt.Println("Wm*w =", matrixMulOnVector(w, Wm))
+
+	public := &ACPublic{
+		Nm: Nm,
+		Nl: Nl,
+		Nv: Nv,
+		Nw: Nw,
+		No: No,
+		K:  1,
+
+		G:    points(1)[0],
+		GVec: points(Nm),
+		HVec: points(9 + Nv),
+
+		Wm: Wm,
+		Wl: Wl,
+		Am: am,
+		Al: al,
+		Fl: true,
+		Fm: false,
+	}
+
+	private := &AcPrivate{
+		v:  [][]*big.Int{v_},
+		sv: []*big.Int{sv},
+		wl: wL,
+		wr: wR,
+		wo: wO,
+		f: func(typ int, index int) *int {
+			if typ == 2 && index < No { // map all to no
+				return &index
+			}
+
+			return nil
+		},
+	}
+
+	ArithmeticCircuitProtocol(public, private)
+	//Wl*w = [0 65000549695646603732796438742359905742570406053903786389881062969044166799965 65000549695646603732796438742359905742570406053903786389881062969044166799964 0 65000549695646603732796438742359905742570406053903786389881062969044166799954 65000549695646603732796438742359905742570406053903786389881062969044166799965 65000549695646603732796438742359905742570406053903786389881062969044166799958 65000549695646603732796438742359905742570406053903786389881062969044166799959 32500274847823301866398219371179952871285203026951893194940531484522083399984 10833424949274433955466073123726650957095067675650631064980177161507361133328 55714756881982803199539804636308490636488919474774674048469482544895000114259 32500274847823301866398219371179952871285203026951893194940531484522083399984 22941370480816448376281096026715260850318966842554277549369786930250882399989 10833424949274433955466073123726650957095067675650631064980177161507361133328 60000507411366095753350558839101451454680374818988110513736365817579230892279 5416712474637216977733036561863325478547533837825315532490088580753680566664 65000549695646603732796438742359905742570406053903786389881062969044166799967 0 0 0 65000549695646603732796438742359905742570406053903786389881062969044166799967 65000549695646603732796438742359905742570406053903786389881062969044166799968 0 0 0 0 65000549695646603732796438742359905742570406053903786389881062969044166799968 65000549695646603732796438742359905742570406053903786389881062969044166799968 0 0 0 65000549695646603732796438742359905742570406053903786389881062969044166799968]
+	//Wl*w = [0 65000549695646603732796438742359905742570406053903786389881062969044166799965 65000549695646603732796438742359905742570406053903786389881062969044166799964 0 65000549695646603732796438742359905742570406053903786389881062969044166799954 65000549695646603732796438742359905742570406053903786389881062969044166799965 65000549695646603732796438742359905742570406053903786389881062969044166799958 65000549695646603732796438742359905742570406053903786389881062969044166799959 9142234176650144491829966685859820830308733581487975989225353124982456341021 52475933973747880313694259180766424658689004284090500249146061771011900874334 32356716210809645824971551950988358595512450029310756842754304185355373055296 9142234176650144491829966685859820830308733581487975989225353124982456341021 64583879505289894734509282083755034551912903450994146733535671539755422140995 52475933973747880313694259180766424658689004284090500249146061771011900874334 36642466740192938378782306153781319413703905373524193308021187458039603833316 47059221499110663335961222618903099180141470446265184716655973190258220307670 65000549695646603732796438742359905742570406053903786389881062969044166799967 0 0 0 65000549695646603732796438742359905742570406053903786389881062969044166799967 65000549695646603732796438742359905742570406053903786389881062969044166799968 0 0 0 0 0 0 0 0 0 0]
+}
+
 func ArithmeticCircuitProtocol(public *ACPublic, private *AcPrivate) {
 	public.V = make([]*bn256.G1, public.K)
 	for i := range public.V {
@@ -202,7 +549,7 @@ func CommitOL(public *ACPublic, wo, wl []*big.Int, f PartitionF) (ro []*big.Int,
 	}
 
 	ll = make([]*big.Int, public.Nv) // Nv
-	for j := range lo {
+	for j := range ll {
 		ll[j] = big.NewInt(0)
 
 		if i := f(2, j); i != nil {
@@ -881,12 +1228,12 @@ func InnerArithmeticCircuitProtocol2(public *ACPublic, private *AcPrivate, r, n,
 		fmt.Println("f'(T) - g(T) =", sub(f_T, vectorMul(cr_T, rT)))
 	}
 
-	// l vector length currently equals to 9. Increase to the nearest 2^i
-	for len(lT) < 16 {
-		lT = append(lT, bint(0))
-		cT = append(cT, bint(0))
-		public.HVec = append(public.HVec, new(bn256.G1).ScalarBaseMult(bint(0)))
-	}
+	//// l vector length currently equals to 9. Increase to the nearest 2^i
+	//for len(lT) < 16 {
+	//	lT = append(lT, bint(0))
+	//	cT = append(cT, bint(0))
+	//	public.HVec = append(public.HVec, new(bn256.G1).ScalarBaseMult(bint(0)))
+	//}
 
 	fmt.Println("Should be WNLA secret: ", vT)
 	wnla(public.G, public.GVec, public.HVec, cT, CT, ch_ro, ch_mu, lT, nT)
