@@ -66,11 +66,13 @@ template SchnorrVerification(n) {
     signal output x;
     signal output y;
 
-    component poseidon = Poseidon(3);
+    component poseidon = Poseidon(5);
 
     poseidon.inputs[0] <== msg;
     poseidon.inputs[1] <== pkx;
     poseidon.inputs[2] <== pky;
+    poseidon.inputs[3] <== rx;
+    poseidon.inputs[4] <== ry;
 
     var hash = poseidon.out;
 

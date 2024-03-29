@@ -10,7 +10,7 @@ Includes:
     1. [Diffie Hellman](./go/deffie-hellman)
     2. [Dynamic Merkle tree (base on Treap)](./go/dynamic-merkle)
     3. [Pedersen commitment (with Back-Maxwell rangeproof)](./go/pedersen)
-    4. [Schnorr signature over BabyJubjub curve](./go/schnorr-bjj)
+    4. [Schnorr signature over bn256 curve](./go/schnorr-bn256)
     5. [ZK-SNARK (Pinocchio protocol) basic implementation](./go/zk-snark)
     6. [Pedersen commitment on Circom circuits](./go/pedersen-circom)
     7. [Elliptic curve](./go/ec)
