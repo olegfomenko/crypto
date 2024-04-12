@@ -46,7 +46,7 @@ func (t *Treap) Remove(key []byte) {
 	node := t2
 	for {
 		if bytes.Compare(node.Left.Hash, key) == 0 {
-			node.Left = node
+			node.Left = nil
 			updateNode(node)
 			break
 		}
