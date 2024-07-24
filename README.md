@@ -25,3 +25,6 @@ Includes:
     1. [Schnorr signature](./circuits/schnorr)
     2. [Pedersen commitment](./circuits/pedersen)
     3. [Merkle tree](./circuits/merkle)
+
+- SageMath implementations of different crypto algorithms:
+    1. [ZK-STARK](./sage/zk-stark)
