@@ -19,7 +19,7 @@ Includes:
     10. [RSA](./go/rsa) 
     11. [Bulletproofs](./go/bp)
     12. [Bulletproofs++](./go/bppp)
-
+    13. [Pedersen commitment on GNARK circuits](./go/pedersen-gnark) 
 
 - Circom circuits:
     1. [Schnorr signature](./circuits/schnorr)
