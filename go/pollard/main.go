@@ -7,6 +7,7 @@ package parcs
 import (
 	"fmt"
 	"math/big"
+	"sync/atomic"
 )
 
 const (
@@ -15,24 +16,28 @@ const (
 )
 
 type ParcsPollard struct {
-	limit uint32
-	sem   chan struct{}
+	limit   uint32
+	running atomic.Int32
+	sem     chan struct{}
 }
 
 func NewParcsPollard(limit uint32) *ParcsPollard {
 	return &ParcsPollard{
-		limit: limit,
-		sem:   make(chan struct{}, limit),
+		limit:   limit,
+		running: atomic.Int32{},
+		sem:     make(chan struct{}, limit),
 	}
 }
 
 func (p *ParcsPollard) runTask(n *big.Int, result chan *big.Int) {
-	p.sem <- struct{}{}
+	p.running.Add(1)
 	go func() {
+		p.sem <- struct{}{}
 		fmt.Println("! Running task for n =", n)
 		fmt.Println("Now task running:", len(p.sem))
 		task(n, result, p.runTask)
 		_ = <-p.sem
+		p.running.Add(-1)
 		fmt.Println("! Finished task for n =", n)
 	}()
 }
@@ -55,7 +60,7 @@ func (p *ParcsPollard) Run(n *big.Int) []*big.Int {
 	result := make(chan *big.Int, MaxDivs)
 	p.runTask(n, result)
 
-	for len(p.sem) > 0 {
+	for p.running.Load() > 0 {
 		// Waiting
 	}
 

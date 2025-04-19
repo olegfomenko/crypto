@@ -24,7 +24,7 @@ func TestParcsPollard_8051(t *testing.T) {
 
 // N=11×17×23×37×53×101×113×127×149×191=347912642190594349.
 func TestParcsPollard_347912642190594349(t *testing.T) {
-	p := NewParcsPollard(5)
+	p := NewParcsPollard(3)
 	res := p.Run(big.NewInt(347912642190594349))
 	fmt.Println(res)
 }
