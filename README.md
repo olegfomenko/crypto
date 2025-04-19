@@ -20,7 +20,8 @@ Includes:
     11. [Bulletproofs](./go/bp)
     12. [Bulletproofs++](./go/bppp)
     13. [Pedersen commitment on GNARK circuits](./go/pedersen-gnark) 
-    14. [FFT](./go/fft) 
+    14. [FFT](./go/fft)
+    15. [rho-Pollrad factorization via PARCS](./go/pollrad) 
 
 - Circom circuits:
     1. [Schnorr signature](./circuits/schnorr)
