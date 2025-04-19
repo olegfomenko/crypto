@@ -19,7 +19,7 @@ func f(x, c, n *big.Int) *big.Int {
 	return res
 }
 
-func Pollrad(n *big.Int) *big.Int {
+func Pollard(n *big.Int) *big.Int {
 	if n.Bit(0) == 0 {
 		return two
 	}

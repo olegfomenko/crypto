@@ -14,19 +14,19 @@ const (
 	MaxDivs       = 1000
 )
 
-type ParcsPollrad struct {
+type ParcsPollard struct {
 	limit uint32
 	sem   chan struct{}
 }
 
-func NewParcsPollrad(limit uint32) *ParcsPollrad {
-	return &ParcsPollrad{
+func NewParcsPollard(limit uint32) *ParcsPollard {
+	return &ParcsPollard{
 		limit: limit,
 		sem:   make(chan struct{}, limit),
 	}
 }
 
-func (p *ParcsPollrad) runTask(n *big.Int, result chan *big.Int) {
+func (p *ParcsPollard) runTask(n *big.Int, result chan *big.Int) {
 	p.sem <- struct{}{}
 	go func() {
 		fmt.Println("! Running task for n =", n)
@@ -43,15 +43,15 @@ func task(n *big.Int, result chan *big.Int, spawn func(n *big.Int, result chan *
 		result <- n
 		return
 	}
-	fmt.Println("Running Pollrad for n=", n)
+	fmt.Println("Running Pollard for n=", n)
 
-	d := Pollrad(n)
+	d := Pollard(n)
 
 	spawn(d, result)
 	spawn(new(big.Int).Div(n, d), result)
 }
 
-func (p *ParcsPollrad) Run(n *big.Int) []*big.Int {
+func (p *ParcsPollard) Run(n *big.Int) []*big.Int {
 	result := make(chan *big.Int, MaxDivs)
 	p.runTask(n, result)
 
@@ -69,31 +69,3 @@ func (p *ParcsPollrad) Run(n *big.Int) []*big.Int {
 
 	return res
 }
-
-/*
-func factor(n *big.Int) ([]*big.Int, error) {
-	if n.Cmp(big.NewInt(1)) == 0 {
-		return nil, nil
-	}
-	// Если n — вероятно простое, возвращаем его.
-	if n.ProbablyPrime(20) { // 20 раундов ≈ 2‑64 ложноположительных
-		return []*big.Int{new(big.Int).Set(n)}, nil
-	}
-
-	// Ищем нетривиальный делитель.
-	d, err := pollardRho(n)
-	if err != nil {
-		return nil, err
-	}
-	// Рекурсивно разлагаем d и n/d.
-	left, err := factor(d)
-	if err != nil {
-		return nil, err
-	}
-	right, err := factor(new(big.Int).Div(n, d))
-	if err != nil {
-		return nil, err
-	}
-	return append(left, right...), nil
-}
-*/

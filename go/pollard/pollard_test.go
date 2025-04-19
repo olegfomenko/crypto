@@ -24,7 +24,7 @@ func isValidFactor(n, d *big.Int) bool {
 func TestPollardRho_8051(t *testing.T) {
 	n, _ := new(big.Int).SetString("8051", 10)
 
-	d := Pollrad(n)
+	d := Pollard(n)
 	if !isValidFactor(n, d) {
 		t.Fatalf("got %s, expected нетривиальный делитель 8051", d)
 	}
@@ -35,7 +35,7 @@ func TestPollardRho_8051(t *testing.T) {
 func TestPollardRho_100(t *testing.T) {
 	n := big.NewInt(100)
 
-	d := Pollrad(n)
+	d := Pollard(n)
 	if !isValidFactor(n, d) {
 		t.Fatalf("got %s, expected нетривиальный делитель 100", d)
 	}
