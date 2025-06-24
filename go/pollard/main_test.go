@@ -28,3 +28,10 @@ func TestParcsPollard_347912642190594349(t *testing.T) {
 	res := p.Run(big.NewInt(347912642190594349))
 	fmt.Println(res)
 }
+
+func TestParcsPollard_pq(t *testing.T) {
+	p := NewParcsPollard(3)
+	val, _ := new(big.Int).SetString("24730374465137320636000204279", 10)
+	res := p.Run(val)
+	fmt.Println(res)
+}

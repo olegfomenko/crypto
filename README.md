@@ -22,6 +22,8 @@ Includes:
     13. [Pedersen commitment on GNARK circuits](./go/pedersen-gnark) 
     14. [FFT](./go/fft)
     15. [rho-Pollard factorization via PARCS](./go/pollard) 
+    16. [Verifiable Encryption](./go/ve-ca)
+    17. [Tower fields](./go/tower) 
 
 - Circom circuits:
     1. [Schnorr signature](./circuits/schnorr)
