@@ -7,7 +7,7 @@ Private keys are generated using `math.TestPrime` for random value.
 
 The following constant in [main.go](./main.go) file defines the size of p,q random primes in bytes:
 ```go
-const size = 128
+const size = 256
 ```
 
 The size of n and phi(n) will be 2*n.
