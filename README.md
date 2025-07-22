@@ -24,6 +24,7 @@ Includes:
     15. [rho-Pollard factorization via PARCS](./go/pollard) 
     16. [Verifiable Encryption](./go/ve-ca)
     17. [Tower fields](./go/tower) 
+    18. [Garbled circuit](./go/gc)
 
 - Circom circuits:
     1. [Schnorr signature](./circuits/schnorr)
