@@ -10,7 +10,7 @@ import (
 	"github.com/olegfomenko/crypto/go/math"
 )
 
-const size = 256
+const Size = 256
 
 const Exp = 65537
 
@@ -22,18 +22,17 @@ type PublicKey struct {
 
 type PrivateKey struct {
 	*PublicKey
-	p, q *big.Int
-	phiN *big.Int
-	d    *big.Int
+	P, Q *big.Int
+	D    *big.Int
 }
 
 func GeneratePrivateKey() (*PrivateKey, error) {
-	p, err := math.GenRandPrime(size)
+	p, err := math.GenRandPrime(Size)
 	if err != nil {
 		return nil, err
 	}
 
-	q, err := math.GenRandPrime(size)
+	q, err := math.GenRandPrime(Size)
 	if err != nil {
 		return nil, err
 	}
@@ -50,10 +49,9 @@ func GeneratePrivateKey() (*PrivateKey, error) {
 		PublicKey: &PublicKey{
 			n: n,
 		},
-		p:    p,
-		q:    q,
-		phiN: phiN,
-		d:    d,
+		P: p,
+		Q: q,
+		D: d,
 	}, nil
 }
 
@@ -62,5 +60,5 @@ func Encrypt(msg *big.Int, pk *PublicKey) *big.Int {
 }
 
 func Decrypt(cypher *big.Int, prv *PrivateKey) *big.Int {
-	return new(big.Int).Exp(cypher, prv.d, prv.n)
+	return new(big.Int).Exp(cypher, prv.D, prv.n)
 }
