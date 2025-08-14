@@ -33,3 +33,4 @@ Includes:
 
 - SageMath implementations of different crypto algorithms:
     1. [ZK-STARK](./sage/zk-stark)
+    2. [Reed-Solomon](./sage/rs)
